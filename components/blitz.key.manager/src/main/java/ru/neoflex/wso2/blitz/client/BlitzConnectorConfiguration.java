@@ -23,7 +23,11 @@ import org.wso2.carbon.apimgt.api.model.ConfigurationDto;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConnectorConfiguration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
 
 @Component(
         name = "custom.configuration.component",
@@ -55,8 +59,17 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
 
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
 
-        // todo add connection parameters that need to connect to the Custom KeymManager here
-
+        configurationDtoList
+                .add(new ConfigurationDto(CLIENT_ID_NAME, CLIENT_ID_LABEL, CLIENT_ID_TYPE, CLIENT_ID_TOOLTIP, CLIENT_ID_DEFAULT_VALUE,
+                        CLIENT_ID_REQUIRED, CLIENT_ID_MASK,
+                        Collections.emptyList(),
+                        CLIENT_ID_MULTIPLE));
+        configurationDtoList
+                .add(new ConfigurationDto(CLIENT_SECRET_NAME, CLIENT_SECRET_LABEL, CLIENT_SECRET_TYPE,
+                        CLIENT_SECRET_TOOLTIP, CLIENT_SECRET_DEFAULT_VALUE, CLIENT_SECRET_REQUIRED,
+                        CLIENT_SECRET_MASK,
+                        Collections.emptyList(),
+                        CLIENT_SECRET_MULTIPLE));
         return configurationDtoList;
     }
 
@@ -66,11 +79,27 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
      * */
     @Override
     public List<ConfigurationDto> getApplicationConfigurations() {
-
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
 
-       // todo add application configuration parameters that need create an OAuth application in the OAuth Server
-
+        configurationDtoList.add(new ConfigurationDto(CLIENT_APPLICATION_TYPE_NAME, CLIENT_APPLICATION_TYPE_LABEL,
+                CLIENT_APPLICATION_TYPE_TYPE, CLIENT_APPLICATION_TYPE_TOOLTIP, CLIENT_APPLICATION_TYPE_DEFAULT_VALUE,
+                CLIENT_APPLICATION_TYPE_REQUIRED, CLIENT_APPLICATION_TYPE_MASK,
+                Arrays.asList("web", "native", "service", "browser"),
+                CLIENT_APPLICATION_TYPE_MULTIPLE
+        ));
+        configurationDtoList.add(new ConfigurationDto(
+                CLIENT_RESPONSE_TYPE_NAME, CLIENT_RESPONSE_TYPE_LABEL, CLIENT_RESPONSE_TYPE_TYPE, CLIENT_RESPONSE_TYPE_TOOLTIP,
+                CLIENT_RESPONSE_TYPE_DEFAULT_VALUE, CLIENT_RESPONSE_TYPE_REQUIRED, CLIENT_RESPONSE_TYPE_MASK,
+                Arrays.asList("code", "token", "id_token"),
+                CLIENT_RESPONSE_TYPE_MULTIPLE
+        ));
+        configurationDtoList.add(new ConfigurationDto(
+                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TYPE,
+                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_REQUIRED,
+                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MASK,
+                Arrays.asList("client_secret_basic", "client_secret_post", "client_secret_jwt"),
+                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MULTIPLE
+        ));
         return configurationDtoList;
     }
 
