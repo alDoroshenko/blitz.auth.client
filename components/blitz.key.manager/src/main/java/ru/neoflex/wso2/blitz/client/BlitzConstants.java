@@ -71,6 +71,8 @@ public class BlitzConstants {
     public static final boolean CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MASK = true;
     public static final boolean CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MULTIPLE = false;
 
+    public static final String REGISTRATION_API_KEY = "API Token";
+
     BlitzConstants() {
     }
 }
