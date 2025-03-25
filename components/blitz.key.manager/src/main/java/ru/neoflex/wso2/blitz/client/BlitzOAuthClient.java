@@ -17,6 +17,13 @@
  */
 package ru.neoflex.wso2.blitz.client;
 
+import com.google.gson.Gson;
+import feign.Feign;
+import feign.auth.BasicAuthRequestInterceptor;
+import feign.gson.GsonDecoder;
+import feign.gson.GsonEncoder;
+import feign.okhttp.OkHttpClient;
+import feign.slf4j.Slf4jLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
@@ -28,20 +35,34 @@ import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
 import org.wso2.carbon.apimgt.api.model.Scope;
 import org.wso2.carbon.apimgt.api.model.URITemplate;
+import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
+import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
+import org.wso2.carbon.apimgt.impl.kmclient.model.BearerInterceptor;
+import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
+import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
+import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
+import ru.neoflex.wso2.blitz.client.client.PasswortClient;
+import ru.neoflex.wso2.blitz.client.client.TokenClient;
+import ru.neoflex.wso2.blitz.client.model.CustomClientInfo;
+import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
 
 /**
  * This class provides the implementation to use "Custom" Authorization Server for managing
  * OAuth clients and Tokens needed by WSO2 API Manager.
  */
 public class BlitzOAuthClient extends AbstractKeyManager {
+    private TokenClient tokenClient;
+
+    private CustomDCRClient customDCRClient;
+    private IntrospectionClient introspectionClient;
+
+    private final Gson gson = new Gson();
 
     private static final Log log = LogFactory.getLog(BlitzOAuthClient.class);
 
@@ -53,10 +74,54 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public void loadConfiguration(KeyManagerConfiguration keyManagerConfiguration) throws APIManagementException {
+        System.out.println("loadConfiguration");
 
         this.configuration = keyManagerConfiguration;
 
-        // todo create client objects such as DCRClent, introspectionClient object to call Authorization Server
+        String clientRegistrationEndpoint =
+                (String) configuration.getParameter(APIConstants.KeyManager.CLIENT_REGISTRATION_ENDPOINT);
+        String apiToken = (String) configuration.getParameter(REGISTRATION_API_KEY);
+
+        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
+        String revokeEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
+        String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
+        String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
+
+        AccessTokenGenerator accessTokenGenerator =
+                new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
+                        clientSecret);
+
+        tokenClient = Feign
+                .builder()
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                .decoder(new GsonDecoder(gson))
+                .encoder(new FormEncoder())
+                .logger(new Slf4jLogger())
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                .target(TokenClient.class, tokenEndpoint);
+
+        customDCRClient = Feign
+                .builder()
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                .decoder(new GsonDecoder(gson))
+                .encoder(new GsonEncoder(gson))
+                .logger(new Slf4jLogger())
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                .target(CustomDCRClient.class, tokenEndpoint);
+
+        String introspectEndpoint =
+                (String) configuration.getParameter(APIConstants.KeyManager.INTROSPECTION_ENDPOINT);
+
+        introspectionClient = Feign
+                .builder()
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                .encoder(new GsonEncoder())
+                .decoder(new GsonDecoder())
+                .logger(new Slf4jLogger())
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                .encoder(new FormEncoder())
+                .target(IntrospectionClient.class, introspectEndpoint);
+        System.out.println(introspectionClient);
     }
 
     /**
@@ -67,9 +132,30 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
+        System.out.println("createApplication");
 
-        //todo create oauth app in the authorization server
+        if (oAuthAppRequest == null) {
+            throw new APIManagementException("OAuthAppRequest cannot be null.");
+        }
+        OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
+
+        System.out.println("tokenClient.getToken");
+        PasswortClient application = tokenClient.getToken(GRANT_TYPES_FIELD_NAME,BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
+
         return null;
+    }
+
+    private PostClientInfo createClientInfoFromConfiguration(KeyManagerConfiguration configuration) {
+        System.out.println("createClientInfoFromConfiguration");
+
+        PostClientInfo postClientInfo = new PostClientInfo();
+
+        postClientInfo.setGrantTypes(GRANT_TYPES_FIELD_NAME);
+        postClientInfo.setScope(BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
+
+        System.out.println("postClientInfo: " + postClientInfo);
+
+        return postClientInfo;
     }
 
     /**
