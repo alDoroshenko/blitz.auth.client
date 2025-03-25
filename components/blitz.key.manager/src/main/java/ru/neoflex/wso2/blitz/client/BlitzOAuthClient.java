@@ -39,14 +39,11 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
-import org.wso2.carbon.apimgt.impl.kmclient.model.BearerInterceptor;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
-import ru.neoflex.wso2.blitz.client.client.PasswortClient;
-import ru.neoflex.wso2.blitz.client.client.TokenClient;
-import ru.neoflex.wso2.blitz.client.model.CustomClientInfo;
-import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
+import ru.neoflex.wso2.blitz.client.client.BlitzTokenResponse;
+import ru.neoflex.wso2.blitz.client.client.ClientCredentials;
 
 import java.util.*;
 
@@ -57,7 +54,7 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
  * OAuth clients and Tokens needed by WSO2 API Manager.
  */
 public class BlitzOAuthClient extends AbstractKeyManager {
-    private TokenClient tokenClient;
+    private ClientCredentials сlientCredentials;
 
     private CustomDCRClient customDCRClient;
     private IntrospectionClient introspectionClient;
@@ -91,14 +88,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
                         clientSecret);
 
-        tokenClient = Feign
+        сlientCredentials = Feign
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
                 .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .target(TokenClient.class, tokenEndpoint);
+                .target(ClientCredentials.class, tokenEndpoint);
 
         customDCRClient = Feign
                 .builder()
@@ -139,23 +136,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
 
-        System.out.println("tokenClient.getToken");
-        PasswortClient application = tokenClient.getToken(GRANT_TYPES_FIELD_NAME,BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
+        System.out.println("POST request to Blitz. Get Admin Token");
+        BlitzTokenResponse adminToken = сlientCredentials.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
+
+        if (adminToken == null || adminToken.getAccessToken() == null) {
+            throw new APIManagementException("Failed to obtain admin token");
+        }
 
         return null;
-    }
-
-    private PostClientInfo createClientInfoFromConfiguration(KeyManagerConfiguration configuration) {
-        System.out.println("createClientInfoFromConfiguration");
-
-        PostClientInfo postClientInfo = new PostClientInfo();
-
-        postClientInfo.setGrantTypes(GRANT_TYPES_FIELD_NAME);
-        postClientInfo.setScope(BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
-
-        System.out.println("postClientInfo: " + postClientInfo);
-
-        return postClientInfo;
     }
 
     /**

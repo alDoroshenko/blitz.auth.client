@@ -5,8 +5,8 @@ import feign.Param;
 import feign.RequestLine;
 
 //TODO Переназвать интерфейс
-public interface TokenClient {
+public interface ClientCredentials {
     @RequestLine("POST")
     @Headers("Content-type:application/x-www-form-urlencoded")
-    PasswortClient getToken(@Param("grant_type") String grantType, @Param("scope") String scope);
+    BlitzTokenResponse getToken(@Param("grant_type") String grantType, @Param("scope") String scope);
 }
