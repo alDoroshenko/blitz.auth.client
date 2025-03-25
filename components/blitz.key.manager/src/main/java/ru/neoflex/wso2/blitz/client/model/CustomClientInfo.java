@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CustomClientInfo {
-
     @SerializedName("client_id")
     private String clientId;
     @SerializedName("application_type")

@@ -42,13 +42,12 @@ import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
 import org.wso2.carbon.apimgt.impl.kmclient.model.BearerInterceptor;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
-import ru.neoflex.wso2.blitz.client.dcrClient.CustomDCRClient;
+import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
+import ru.neoflex.wso2.blitz.client.client.TokenClient;
+import ru.neoflex.wso2.blitz.client.model.CustomClientInfo;
+import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
 
@@ -57,6 +56,8 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
  * OAuth clients and Tokens needed by WSO2 API Manager.
  */
 public class BlitzOAuthClient extends AbstractKeyManager {
+    private TokenClient tokenClient;
+
     private CustomDCRClient customDCRClient;
     private IntrospectionClient introspectionClient;
 
@@ -72,6 +73,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public void loadConfiguration(KeyManagerConfiguration keyManagerConfiguration) throws APIManagementException {
+        System.out.println("loadConfiguration");
 
         this.configuration = keyManagerConfiguration;
 
@@ -88,32 +90,39 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
                         clientSecret);
 
-        customDCRClient = Feign
+        tokenClient = Feign
                 .builder()
-                .client(new OkHttpClient())
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
                 .encoder(new GsonEncoder(gson))
                 .logger(new Slf4jLogger())
-                .requestInterceptor(new BearerInterceptor(accessTokenGenerator))
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                 .errorDecoder(new CustomErrorDecoder())
-                .target(CustomDCRClient.class, clientRegistrationEndpoint);
+                .target(TokenClient.class, tokenEndpoint);
 
-        System.out.print(customDCRClient);
-
+        customDCRClient = Feign
+                .builder()
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                .decoder(new GsonDecoder(gson))
+                .encoder(new GsonEncoder(gson))
+                .logger(new Slf4jLogger())
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                .errorDecoder(new CustomErrorDecoder())
+                .target(CustomDCRClient.class, tokenEndpoint);
 
         String introspectEndpoint =
                 (String) configuration.getParameter(APIConstants.KeyManager.INTROSPECTION_ENDPOINT);
 
         introspectionClient = Feign
                 .builder()
-                .client(new OkHttpClient())
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .encoder(new GsonEncoder())
                 .decoder(new GsonDecoder())
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                 .encoder(new FormEncoder())
                 .target(IntrospectionClient.class, introspectEndpoint);
-        System.out.print(introspectionClient);
+        System.out.println(introspectionClient);
     }
 
     /**
@@ -124,9 +133,32 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
+        System.out.println("createApplication");
 
-        //todo create oauth app in the authorization server
+        if (oAuthAppRequest == null) {
+            throw new APIManagementException("OAuthAppRequest cannot be null.");
+        }
+        OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
+
+        PostClientInfo clientInfo = createClientInfoFromConfiguration(configuration);
+
+        System.out.println("customDCRClient.createApplication");
+        CustomClientInfo application = tokenClient.getToken(clientInfo);
+
         return null;
+    }
+
+    private PostClientInfo createClientInfoFromConfiguration(KeyManagerConfiguration configuration) {
+        System.out.println("createClientInfoFromConfiguration");
+
+        PostClientInfo postClientInfo = new PostClientInfo();
+
+        postClientInfo.setGrantTypes(GRANT_TYPES_FIELD_NAME);
+        postClientInfo.setScope(BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
+
+        System.out.println("postClientInfo: " + postClientInfo);
+
+        return postClientInfo;
     }
 
     /**

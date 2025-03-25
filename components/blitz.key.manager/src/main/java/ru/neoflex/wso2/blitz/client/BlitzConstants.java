@@ -25,7 +25,6 @@ public class BlitzConstants {
     public static final String CUSTOM_TYPE = "Custom";
     public static final String DISPLAY_NAME = "Custom";
 
-
     public static final String CLIENT_ID_NAME = "client_id";
     public static final String CLIENT_ID_LABEL = "Client ID";
     public static final String CLIENT_ID_TYPE = "input";
@@ -72,6 +71,11 @@ public class BlitzConstants {
     public static final boolean CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MULTIPLE = false;
 
     public static final String REGISTRATION_API_KEY = "API Token";
+
+    public static final String GRANT_TYPES_FIELD_NAME = "client_credentials";
+    public static final String BLITZ_API_SYS_APP = "blitz_api_sys_app";
+    public static final String BLITZ_API_SYS_APP_CHG = "blitz_api_sys_app_chg";
+
 
     BlitzConstants() {
     }

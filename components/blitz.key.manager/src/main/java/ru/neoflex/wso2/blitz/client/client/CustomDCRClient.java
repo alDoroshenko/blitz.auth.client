@@ -1,14 +1,15 @@
-package ru.neoflex.wso2.blitz.client.dcrClient;
+package ru.neoflex.wso2.blitz.client.client;
 
 import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 import ru.neoflex.wso2.blitz.client.model.CustomClientInfo;
+import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
 
 public interface CustomDCRClient {
     @RequestLine("POST") // PUT
     @Headers("Content-Type: application/json")
-    CustomClientInfo createApplication(CustomClientInfo clientInfo); // здесь переделать тело запроса на параметры, которые скинут. Запрос на регистрацию динамического клиента
+    CustomClientInfo createApplication(PostClientInfo clientInfo); // здесь переделать тело запроса на параметры, которые скинут. Запрос на регистрацию динамического клиента
 
     @RequestLine("GET /{clientId}")
     @Headers("Content-Type: application/json")
