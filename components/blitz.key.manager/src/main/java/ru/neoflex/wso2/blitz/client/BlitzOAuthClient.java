@@ -408,6 +408,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public String getType() {
 
-        return BlitzConstants.CUSTOM_TYPE;
+        return BlitzConstants.BLITZ_TYPE;
     }
 }
