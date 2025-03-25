@@ -38,14 +38,13 @@ import ru.neoflex.wso2.blitz.client.client.BlitzTokenResponse;
 import ru.neoflex.wso2.blitz.client.client.ClientCredentials;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
 
-/**
- * This class provides the implementation to use "Custom" Authorization Server for managing
- * OAuth clients and Tokens needed by WSO2 API Manager.
- */
 public class BlitzOAuthClient extends AbstractKeyManager {
     private ClientCredentials сlientCredentials;
 
@@ -70,12 +69,12 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         String clientRegistrationEndpoint =
                 (String) configuration.getParameter(APIConstants.KeyManager.CLIENT_REGISTRATION_ENDPOINT);
-        String apiToken = (String) configuration.getParameter(REGISTRATION_API_KEY);
+        String apiToken = (String) configuration.getParameter(BlitzConstants.REGISTRATION_API_KEY);
 
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
         String revokeEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
-        String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
-        String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
+        String clientId = (String) configuration.getParameter(BlitzConstants.CLIENT_ID_NAME);
+        String clientSecret = (String) configuration.getParameter(BlitzConstants.CLIENT_SECRET_NAME);
 
         AccessTokenGenerator accessTokenGenerator =
                 new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
@@ -327,19 +326,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public Map<String, Set<Scope>> getScopesForAPIS(String apiIdsString) throws APIManagementException {
 
-        Map<String, Set<Scope>> apiToScopeMapping = new HashMap<>();
-        ApiMgtDAO apiMgtDAO = ApiMgtDAO.getInstance();
-        Map<String, Set<String>> apiToScopeKeyMapping = apiMgtDAO.getScopesForAPIS(apiIdsString);
-        for (String apiId : apiToScopeKeyMapping.keySet()) {
-            Set<Scope> apiScopes = new LinkedHashSet<>();
-            Set<String> scopeKeys = apiToScopeKeyMapping.get(apiId);
-            for (String scopeKey : scopeKeys) {
-                Scope scope = getScopeByName(scopeKey);
-                apiScopes.add(scope);
-            }
-            apiToScopeMapping.put(apiId, apiScopes);
-        }
-        return apiToScopeMapping;
+        return null;
     }
 
     @Override
