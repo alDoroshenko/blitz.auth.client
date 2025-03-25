@@ -18,12 +18,15 @@
 package ru.neoflex.wso2.blitz.client;
 
 
+import java.util.Arrays;
+import java.util.List;
+
 public class BlitzConstants {
     public static final String UTF_8 = "UTF-8";
     public static final String BLITZ_TYPE = "Blitz";
     public static final String DISPLAY_NAME = "Blitz";
-    public static final  String TYPE_INPUT = "input";
-    public static final  String TYPE_SELECT = "select";
+    public static final  String FIELD_TYPE_INPUT = "input";
+    public static final  String FIELD_TYPE_SELECT = "select";
     public static final String EMPTY_DEFAULT_VALUE = "";
 
     public static final String CLIENT_ID_NAME = "client_id";
@@ -41,12 +44,14 @@ public class BlitzConstants {
     public static final String CLIENT_RESPONSE_TYPE_NAME = "response_types";
     public static final String CLIENT_RESPONSE_TYPE_LABEL = "Response Type";
     public static final String CLIENT_RESPONSE_TYPE_TOOLTIP = "Type Of Token response";
+    public static final List<String> CLIENT_RESPONSE_TYPE_LIST = Arrays.asList("code", "token", "id_token");
 
     public static final String CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME = "token_endpoint_auth_method";
     public static final String CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL = "Token endpoint Authentication Method";
     public static final String CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP = "How to Authenticate Token Endpoint";
     public static final String CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE = "client_secret_basic";
-
+    public static final List<String> CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LIST = Arrays.asList(
+            "client_secret_basic", "client_secret_post", "client_secret_jwt");
 
     public static final String REGISTRATION_API_KEY = "API Token";
 

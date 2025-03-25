@@ -54,7 +54,7 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
                 .add(new ConfigurationDto(
                         APPLICATION_REGISTRATION_ENDPOINT_NAME,
                         APPLICATION_REGISTRATION_ENDPOINT_LABEL,
-                        TYPE_INPUT,
+                        FIELD_TYPE_INPUT,
                         APPLICATION_REGISTRATION_ENDPOINT_TOOLTIP,
                         EMPTY_DEFAULT_VALUE,
                         true,
@@ -67,7 +67,7 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
                 .add(new ConfigurationDto(
                         CLIENT_ID_NAME,
                         CLIENT_ID_LABEL,
-                        TYPE_INPUT,
+                        FIELD_TYPE_INPUT,
                         CLIENT_ID_TOOLTIP,
                         EMPTY_DEFAULT_VALUE,
                         true,
@@ -78,7 +78,7 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
                 .add(new ConfigurationDto(
                         CLIENT_SECRET_NAME,
                         CLIENT_SECRET_LABEL,
-                        TYPE_INPUT,
+                        FIELD_TYPE_INPUT,
                         CLIENT_SECRET_TOOLTIP,
                         EMPTY_DEFAULT_VALUE,
                         true,
@@ -97,24 +97,24 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
                 .add(new ConfigurationDto(
                         CLIENT_RESPONSE_TYPE_NAME,
                         CLIENT_RESPONSE_TYPE_LABEL,
-                        TYPE_SELECT,
+                        FIELD_TYPE_SELECT,
                         CLIENT_RESPONSE_TYPE_TOOLTIP,
                         EMPTY_DEFAULT_VALUE,
                         true,
                         false,
-                        Arrays.asList("code", "token", "id_token"),
+                        CLIENT_RESPONSE_TYPE_LIST,
                         true
                 ));
         configurationDtoList
                 .add(new ConfigurationDto(
                         CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME,
                         CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL,
-                        TYPE_SELECT,
+                        FIELD_TYPE_SELECT,
                         CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP,
                         CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE,
                         true,
                         true,
-                        Arrays.asList("client_secret_basic", "client_secret_post", "client_secret_jwt"),
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LIST,
                         false
                 ));
         return configurationDtoList;
