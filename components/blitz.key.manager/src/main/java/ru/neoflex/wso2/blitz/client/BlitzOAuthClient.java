@@ -27,23 +27,16 @@ import feign.slf4j.Slf4jLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.wso2.carbon.apimgt.api.model.API;
-import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
-import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
-import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
-import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
-import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
-import org.wso2.carbon.apimgt.api.model.Scope;
-import org.wso2.carbon.apimgt.api.model.URITemplate;
+import org.wso2.carbon.apimgt.api.model.*;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
-import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
 import ru.neoflex.wso2.blitz.client.client.BlitzTokenResponse;
 import ru.neoflex.wso2.blitz.client.client.ClientCredentials;
+import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
 
 import java.util.*;
 
@@ -209,7 +202,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
 
-      // todo implement the logic to get a new access token
+        // todo implement the logic to get a new access token
 
         return tokenInfo;
     }
@@ -233,11 +226,10 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         if (tokenRequest == null) {
             tokenRequest = new AccessTokenRequest();
         }
-       // todo implement logic to build an access token request
+        // todo implement logic to build an access token request
 
         return tokenRequest;
     }
-
 
 
     /**
@@ -256,7 +248,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
 // todo implemnt logic to get access token meta data from the introspect endpoint
-            return tokenInfo;
+        return tokenInfo;
     }
 
     @Override
@@ -295,7 +287,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public Map getResourceByApiId(String apiId) throws APIManagementException {
 
-       //  retrieves the registered resource by the given API ID from the  APIResource registration endpoint.
+        //  retrieves the registered resource by the given API ID from the  APIResource registration endpoint.
 
         return null;
     }
