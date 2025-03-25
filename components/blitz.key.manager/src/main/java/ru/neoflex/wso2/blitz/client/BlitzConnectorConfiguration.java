@@ -38,76 +38,92 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
 
     @Override
     public String getImplementation() {
-
         return BlitzOAuthClient.class.getName();
     }
 
     @Override
     public String getJWTValidator() {
-
-        // If you need to implement a custom JWT validation logic you need to implement
-        // org.wso2.carbon.apimgt.impl.jwt.JWTValidator interface and instantiate it in here.
         return null;
     }
 
-    /*
-     *  Provides list of Configurations that need to show in Admin portal in order to connect with KeyManager
-     *
-     *
-     * */
     @Override
     public List<ConfigurationDto> getConnectionConfigurations() {
 
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        APPLICATION_REGISTRATION_ENDPOINT_NAME,
+                        APPLICATION_REGISTRATION_ENDPOINT_LABEL,
+                        FIELD_TYPE_INPUT,
+                        APPLICATION_REGISTRATION_ENDPOINT_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        false,
+                        Collections.emptyList(),
+                        false
+                ));
 
         configurationDtoList
-                .add(new ConfigurationDto(CLIENT_ID_NAME, CLIENT_ID_LABEL, CLIENT_ID_TYPE, CLIENT_ID_TOOLTIP, CLIENT_ID_DEFAULT_VALUE,
-                        CLIENT_ID_REQUIRED, CLIENT_ID_MASK,
+                .add(new ConfigurationDto(
+                        CLIENT_ID_NAME,
+                        CLIENT_ID_LABEL,
+                        FIELD_TYPE_INPUT,
+                        CLIENT_ID_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        false,
                         Collections.emptyList(),
-                        CLIENT_ID_MULTIPLE));
+                        false));
         configurationDtoList
-                .add(new ConfigurationDto(CLIENT_SECRET_NAME, CLIENT_SECRET_LABEL, CLIENT_SECRET_TYPE,
-                        CLIENT_SECRET_TOOLTIP, CLIENT_SECRET_DEFAULT_VALUE, CLIENT_SECRET_REQUIRED,
-                        CLIENT_SECRET_MASK,
+                .add(new ConfigurationDto(
+                        CLIENT_SECRET_NAME,
+                        CLIENT_SECRET_LABEL,
+                        FIELD_TYPE_INPUT,
+                        CLIENT_SECRET_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        true,
                         Collections.emptyList(),
-                        CLIENT_SECRET_MULTIPLE));
+                        false));
         return configurationDtoList;
     }
 
-    /*
-     *   Provides list of configurations need to create Oauth applications in Oauth server in Devportal
-     *
-     * */
+
     @Override
     public List<ConfigurationDto> getApplicationConfigurations() {
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
 
-        configurationDtoList.add(new ConfigurationDto(CLIENT_APPLICATION_TYPE_NAME, CLIENT_APPLICATION_TYPE_LABEL,
-                CLIENT_APPLICATION_TYPE_TYPE, CLIENT_APPLICATION_TYPE_TOOLTIP, CLIENT_APPLICATION_TYPE_DEFAULT_VALUE,
-                CLIENT_APPLICATION_TYPE_REQUIRED, CLIENT_APPLICATION_TYPE_MASK,
-                Arrays.asList("web", "native", "service", "browser"),
-                CLIENT_APPLICATION_TYPE_MULTIPLE
-        ));
-        configurationDtoList.add(new ConfigurationDto(
-                CLIENT_RESPONSE_TYPE_NAME, CLIENT_RESPONSE_TYPE_LABEL, CLIENT_RESPONSE_TYPE_TYPE, CLIENT_RESPONSE_TYPE_TOOLTIP,
-                CLIENT_RESPONSE_TYPE_DEFAULT_VALUE, CLIENT_RESPONSE_TYPE_REQUIRED, CLIENT_RESPONSE_TYPE_MASK,
-                Arrays.asList("code", "token", "id_token"),
-                CLIENT_RESPONSE_TYPE_MULTIPLE
-        ));
-        configurationDtoList.add(new ConfigurationDto(
-                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TYPE,
-                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE, CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_REQUIRED,
-                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MASK,
-                Arrays.asList("client_secret_basic", "client_secret_post", "client_secret_jwt"),
-                CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_MULTIPLE
-        ));
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        CLIENT_RESPONSE_TYPE_NAME,
+                        CLIENT_RESPONSE_TYPE_LABEL,
+                        FIELD_TYPE_SELECT,
+                        CLIENT_RESPONSE_TYPE_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        false,
+                        CLIENT_RESPONSE_TYPE_LIST,
+                        true
+                ));
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL,
+                        FIELD_TYPE_SELECT,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE,
+                        true,
+                        true,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LIST,
+                        false
+                ));
         return configurationDtoList;
     }
 
     @Override
     public String getType() {
 
-        return BlitzConstants.CUSTOM_TYPE;
+        return BlitzConstants.BLITZ_TYPE;
     }
 
     @Override
