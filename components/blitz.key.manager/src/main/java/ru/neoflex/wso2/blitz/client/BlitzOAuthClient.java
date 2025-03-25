@@ -39,23 +39,20 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
-import org.wso2.carbon.apimgt.impl.kmclient.model.BearerInterceptor;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
 import ru.neoflex.wso2.blitz.client.client.PasswortClient;
 import ru.neoflex.wso2.blitz.client.client.TokenClient;
-import ru.neoflex.wso2.blitz.client.model.CustomClientInfo;
 import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
 
-/**
- * This class provides the implementation to use "Custom" Authorization Server for managing
- * OAuth clients and Tokens needed by WSO2 API Manager.
- */
 public class BlitzOAuthClient extends AbstractKeyManager {
     private TokenClient tokenClient;
 
@@ -80,12 +77,12 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         String clientRegistrationEndpoint =
                 (String) configuration.getParameter(APIConstants.KeyManager.CLIENT_REGISTRATION_ENDPOINT);
-        String apiToken = (String) configuration.getParameter(REGISTRATION_API_KEY);
+        String apiToken = (String) configuration.getParameter(BlitzConstants.REGISTRATION_API_KEY);
 
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
         String revokeEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
-        String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
-        String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
+        String clientId = (String) configuration.getParameter(BlitzConstants.CLIENT_ID_NAME);
+        String clientSecret = (String) configuration.getParameter(BlitzConstants.CLIENT_SECRET_NAME);
 
         AccessTokenGenerator accessTokenGenerator =
                 new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
@@ -140,7 +137,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
 
         System.out.println("tokenClient.getToken");
-        PasswortClient application = tokenClient.getToken(GRANT_TYPES_FIELD_NAME,BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
+        PasswortClient application = tokenClient.getToken(BlitzConstants.GRANT_TYPES_FIELD_NAME,
+                BlitzConstants.BLITZ_API_SYS_APP + " " + BlitzConstants.BLITZ_API_SYS_APP_CHG);
 
         return null;
     }
@@ -150,8 +148,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         PostClientInfo postClientInfo = new PostClientInfo();
 
-        postClientInfo.setGrantTypes(GRANT_TYPES_FIELD_NAME);
-        postClientInfo.setScope(BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
+        postClientInfo.setGrantTypes(BlitzConstants.GRANT_TYPES_FIELD_NAME);
+        postClientInfo.setScope(BlitzConstants.BLITZ_API_SYS_APP + " " + BlitzConstants.BLITZ_API_SYS_APP_CHG);
 
         System.out.println("postClientInfo: " + postClientInfo);
 
@@ -221,7 +219,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
 
-      // todo implement the logic to get a new access token
+        // todo implement the logic to get a new access token
 
         return tokenInfo;
     }
@@ -245,11 +243,10 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         if (tokenRequest == null) {
             tokenRequest = new AccessTokenRequest();
         }
-       // todo implement logic to build an access token request
+        // todo implement logic to build an access token request
 
         return tokenRequest;
     }
-
 
 
     /**
@@ -268,7 +265,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
 // todo implemnt logic to get access token meta data from the introspect endpoint
-            return tokenInfo;
+        return tokenInfo;
     }
 
     @Override
@@ -307,7 +304,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public Map getResourceByApiId(String apiId) throws APIManagementException {
 
-       //  retrieves the registered resource by the given API ID from the  APIResource registration endpoint.
+        //  retrieves the registered resource by the given API ID from the  APIResource registration endpoint.
 
         return null;
     }
@@ -420,6 +417,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public String getType() {
 
-        return BlitzConstants.CUSTOM_TYPE;
+        return BlitzConstants.BLITZ_TYPE;
     }
 }
