@@ -27,27 +27,42 @@ import feign.slf4j.Slf4jLogger;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
-import org.wso2.carbon.apimgt.api.model.*;
+import org.wso2.carbon.apimgt.api.model.API;
+import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
+import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
+import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
+import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
+import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
+import org.wso2.carbon.apimgt.api.model.Scope;
+import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
-import ru.neoflex.wso2.blitz.client.client.BlitzTokenResponse;
-import ru.neoflex.wso2.blitz.client.client.ClientCredentials;
+import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
+import ru.neoflex.wso2.blitz.client.model.BlitzAdminTokenResponse;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.GRANT_TYPES_FIELD;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.REGISTRATION_API_KEY;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
 /**
  * This class provides the implementation to use "Custom" Authorization Server for managing
  * OAuth clients and Tokens needed by WSO2 API Manager.
  */
 public class BlitzOAuthClient extends AbstractKeyManager {
-    private ClientCredentials сlientCredentials;
+    private BlitzAdminTokenClient blitzAdminTokenClient;
 
     private CustomDCRClient customDCRClient;
     private IntrospectionClient introspectionClient;
@@ -81,14 +96,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
                         clientSecret);
 
-        сlientCredentials = Feign
+        blitzAdminTokenClient = Feign
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
                 .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .target(ClientCredentials.class, tokenEndpoint);
+                .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
         customDCRClient = Feign
                 .builder()
@@ -130,9 +145,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
 
         System.out.println("POST request to Blitz. Get Admin Token");
-        BlitzTokenResponse adminToken = сlientCredentials.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
+        BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
 
-        if (adminToken == null || adminToken.getAccessToken() == null) {
+        if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
             throw new APIManagementException("Failed to obtain admin token");
         }
 

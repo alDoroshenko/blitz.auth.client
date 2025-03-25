@@ -1,8 +1,8 @@
-package ru.neoflex.wso2.blitz.client.client;
+package ru.neoflex.wso2.blitz.client.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class BlitzTokenResponse {
+public class BlitzAdminTokenResponse {
     @SerializedName("access_token")
     private String accessToken;
     @SerializedName("expires_in")
