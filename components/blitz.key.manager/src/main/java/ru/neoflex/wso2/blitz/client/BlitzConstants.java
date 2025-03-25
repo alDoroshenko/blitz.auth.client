@@ -20,9 +20,6 @@ package ru.neoflex.wso2.blitz.client;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * This class will hold constants related to Okta key manager implementation.
- */
 public class BlitzConstants {
     public static final String UTF_8 = "UTF-8";
     public static final String BLITZ_TYPE = "Blitz";
