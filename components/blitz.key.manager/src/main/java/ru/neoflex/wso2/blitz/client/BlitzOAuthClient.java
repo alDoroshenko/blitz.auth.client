@@ -43,6 +43,7 @@ import org.wso2.carbon.apimgt.impl.kmclient.model.BearerInterceptor;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
+import ru.neoflex.wso2.blitz.client.client.PasswortClient;
 import ru.neoflex.wso2.blitz.client.client.TokenClient;
 import ru.neoflex.wso2.blitz.client.model.CustomClientInfo;
 import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
@@ -94,10 +95,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
-                .encoder(new GsonEncoder(gson))
+                .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .errorDecoder(new CustomErrorDecoder())
                 .target(TokenClient.class, tokenEndpoint);
 
         customDCRClient = Feign
@@ -107,7 +107,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .encoder(new GsonEncoder(gson))
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .errorDecoder(new CustomErrorDecoder())
                 .target(CustomDCRClient.class, tokenEndpoint);
 
         String introspectEndpoint =
@@ -140,10 +139,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
 
-        PostClientInfo clientInfo = createClientInfoFromConfiguration(configuration);
-
-        System.out.println("customDCRClient.createApplication");
-        CustomClientInfo application = tokenClient.getToken(clientInfo);
+        System.out.println("tokenClient.getToken");
+        PasswortClient application = tokenClient.getToken(GRANT_TYPES_FIELD_NAME,BLITZ_API_SYS_APP+" "+BLITZ_API_SYS_APP_CHG);
 
         return null;
     }

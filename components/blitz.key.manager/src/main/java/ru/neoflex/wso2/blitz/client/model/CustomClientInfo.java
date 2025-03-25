@@ -40,8 +40,6 @@ public class CustomClientInfo {
     private String policyUri;
     @SerializedName("request_object_signing_alg")
     private String requestObjectSigningAlgorithm;
-    @SerializedName("jwks")
-    private JWKS jwks;
 
     public String getClientId() {
         return clientId;
@@ -177,13 +175,5 @@ public class CustomClientInfo {
 
     public void setRequestObjectSigningAlgorithm(String requestObjectSigningAlgorithm) {
         this.requestObjectSigningAlgorithm = requestObjectSigningAlgorithm;
-    }
-
-    public JWKS getJwks() {
-        return jwks;
-    }
-
-    public void setJwks(JWKS jwks) {
-        this.jwks = jwks;
     }
 }
