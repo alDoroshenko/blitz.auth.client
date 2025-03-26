@@ -57,10 +57,7 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.GRANT_TYPES_FIELD;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.REGISTRATION_API_KEY;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
-/**
- * This class provides the implementation to use "Custom" Authorization Server for managing
- * OAuth clients and Tokens needed by WSO2 API Manager.
- */
+
 public class BlitzOAuthClient extends AbstractKeyManager {
     private BlitzAdminTokenClient blitzAdminTokenClient;
 
@@ -71,12 +68,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     private static final Log log = LogFactory.getLog(BlitzOAuthClient.class);
 
-    /**
-     * {@code APIManagerComponent} calls this method, passing KeyManagerConfiguration as a {@code String}.
-     *
-     * @param keyManagerConfiguration Configuration as a {@link KeyManagerConfiguration}
-     * @throws APIManagementException This is the custom exception class for API management.
-     */
+
     @Override
     public void loadConfiguration(KeyManagerConfiguration keyManagerConfiguration) throws APIManagementException {
         System.out.println("loadConfiguration");
@@ -129,12 +121,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         System.out.println(introspectionClient);
     }
 
-    /**
-     * This method will Register an OAuth client in Custom Authorization Server.
-     *
-     * @param oAuthAppRequest This object holds all parameters required to register an OAuth client.
-     * @throws APIManagementException This is the custom exception class for API management.
-     */
+
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
         System.out.println("createApplication");
