@@ -169,8 +169,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
 
-        ArrayList<String> redirectUriPrefixes = new ArrayList<>();//TODO захардкодить через константу или получать через какое-то поле
-        redirectUriPrefixes.add("https://api-manager:9443");
+        ArrayList<String> redirectUriPrefixes = new ArrayList<>();
+        redirectUriPrefixes.add(oAuthApplicationInfo.getCallBackURL());
 
         ArrayList<String> scopes = new ArrayList<>();
         scopes.add(DEFAULT_SCORE);
@@ -184,7 +184,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         responseTypes.add("code");
         responseTypes.add("token");
 
-        //TODO нам бы сделать билдер или метод для заполнения полей объекта
         Oauth oauth = new Oauth();
         oauth.setClientSecret("test_Password");//TODO нужен генератор пароля
         oauth.setRedirectUriPrefixes(redirectUriPrefixes);//получить из галок в calbackurl
