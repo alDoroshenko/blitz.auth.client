@@ -56,6 +56,7 @@ import java.util.Set;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.DEFAULT_SCORE;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.GRANT_TYPES_FIELD;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.REGISTRATION_API_KEY;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
@@ -80,18 +81,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         this.configuration = keyManagerConfiguration;
 
-        String clientRegistrationEndpoint =
-                (String) configuration.getParameter(APIConstants.KeyManager.CLIENT_REGISTRATION_ENDPOINT);
-        String apiToken = (String) configuration.getParameter(REGISTRATION_API_KEY);
-
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
-        String revokeEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
         String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
         String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
-
-        AccessTokenGenerator accessTokenGenerator =
-                new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
-                        clientSecret);
 
         blitzAdminTokenClient = Feign
                 .builder()
@@ -101,29 +93,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                 .target(BlitzAdminTokenClient.class, tokenEndpoint);
-
-        customDCRClient = Feign
-                .builder()
-                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                .decoder(new GsonDecoder(gson))
-                .encoder(new GsonEncoder(gson))
-                .logger(new Slf4jLogger())
-                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .target(CustomDCRClient.class, tokenEndpoint);
-
-        String introspectEndpoint =
-                (String) configuration.getParameter(APIConstants.KeyManager.INTROSPECTION_ENDPOINT);
-
-        introspectionClient = Feign
-                .builder()
-                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                .encoder(new GsonEncoder())
-                .decoder(new GsonDecoder())
-                .logger(new Slf4jLogger())
-                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .encoder(new FormEncoder())
-                .target(IntrospectionClient.class, introspectEndpoint);
-        System.out.println(introspectionClient);
     }
 
 
@@ -138,15 +107,19 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         System.out.println("POST request to Blitz. Get Admin Token");
         BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
+
         if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
             throw new APIManagementException("Failed to obtain admin token");
         }
 
         System.out.println("PUT request to Blitz. Set application settings");
+
         String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
+
         if (appRegistrationEndpoint == null) {
             throw new APIManagementException("Failed to obtain application endpoint");
         }
+
         String clientName = oAuthApplicationInfo.getClientName();
         if (clientName == null) {
             throw new APIManagementException("Failed to obtain application name");
@@ -165,27 +138,27 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         redirectUriPrefixes.add("https://api-manager:9443");
 
         ArrayList<String> scopes = new ArrayList<>();
-        scopes.add("default");
+        scopes.add(DEFAULT_SCORE);
 
-        ArrayList<String> grantTypes = new ArrayList<>();
+        ArrayList<String> grantTypes = new ArrayList<>();//получить из галок в кейгенераторе
         grantTypes.add("authorization_code");
         grantTypes.add("password");
         grantTypes.add("client_credentials");
 
-        ArrayList<String> responseTypes = new ArrayList<>();
+        ArrayList<String> responseTypes = new ArrayList<>();//получить из галок в кейгенераторе
         responseTypes.add("code");
         responseTypes.add("token");
 
         //TODO нам бы сделать билдер или метод для заполнения полей объекта
         Oauth oauth = new Oauth();
         oauth.setClientSecret("test_Password");//TODO нужен генератор пароля
-        oauth.setRedirectUriPrefixes(redirectUriPrefixes);
+        oauth.setRedirectUriPrefixes(redirectUriPrefixes);//получить из галок в calbackurl
         oauth.setAvailableScopes(scopes);
         oauth.setDefaultScopes(scopes);
         oauth.setEnabled(true);
         oauth.setDefaultAccessType("offline");
         oauth.setPixyMandatory(true);
-        oauth.setTokenEndpointAuthMethod("client_secret_basic");
+        oauth.setTokenEndpointAuthMethod("client_secret_basic");//получить из галок в calbackurl
         oauth.setGrantTypes(grantTypes);
         oauth.setResponseTypes(responseTypes);
 
@@ -201,6 +174,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         System.out.println("POST request to Blitz. Get Application Token");
 
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
+        String clientSecret = oauth.getClientSecret();
 
         System.out.println(clientName);
         System.out.println(oauth.getClientSecret());
@@ -210,7 +184,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .decoder(new GsonDecoder(gson))
                 .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
-                .requestInterceptor(new BasicAuthRequestInterceptor(clientName, oauth.getClientSecret()))
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientName, clientSecret))
                 .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
         BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "default");
