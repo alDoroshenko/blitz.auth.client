@@ -41,10 +41,9 @@ import org.wso2.carbon.apimgt.impl.dao.ApiMgtDAO;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
+import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
-import ru.neoflex.wso2.blitz.client.client.PasswortClient;
-import ru.neoflex.wso2.blitz.client.client.TokenClient;
-import ru.neoflex.wso2.blitz.client.model.PostClientInfo;
+import ru.neoflex.wso2.blitz.client.model.BlitzAdminTokenResponse;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,9 +51,18 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.GRANT_TYPES_FIELD;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.REGISTRATION_API_KEY;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
+/**
+ * This class provides the implementation to use "Custom" Authorization Server for managing
+ * OAuth clients and Tokens needed by WSO2 API Manager.
+ */
 public class BlitzOAuthClient extends AbstractKeyManager {
-    private TokenClient tokenClient;
+    private BlitzAdminTokenClient blitzAdminTokenClient;
 
     private CustomDCRClient customDCRClient;
     private IntrospectionClient introspectionClient;
@@ -77,25 +85,25 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         String clientRegistrationEndpoint =
                 (String) configuration.getParameter(APIConstants.KeyManager.CLIENT_REGISTRATION_ENDPOINT);
-        String apiToken = (String) configuration.getParameter(BlitzConstants.REGISTRATION_API_KEY);
+        String apiToken = (String) configuration.getParameter(REGISTRATION_API_KEY);
 
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
         String revokeEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.REVOKE_ENDPOINT);
-        String clientId = (String) configuration.getParameter(BlitzConstants.CLIENT_ID_NAME);
-        String clientSecret = (String) configuration.getParameter(BlitzConstants.CLIENT_SECRET_NAME);
+        String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
+        String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
 
         AccessTokenGenerator accessTokenGenerator =
                 new AccessTokenGenerator(tokenEndpoint, revokeEndpoint, clientId,
                         clientSecret);
 
-        tokenClient = Feign
+        blitzAdminTokenClient = Feign
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
                 .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .target(TokenClient.class, tokenEndpoint);
+                .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
         customDCRClient = Feign
                 .builder()
@@ -136,24 +144,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
 
-        System.out.println("tokenClient.getToken");
-        PasswortClient application = tokenClient.getToken(BlitzConstants.GRANT_TYPES_FIELD_NAME,
-                BlitzConstants.BLITZ_API_SYS_APP + " " + BlitzConstants.BLITZ_API_SYS_APP_CHG);
+        System.out.println("POST request to Blitz. Get Admin Token");
+        BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
+
+        if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
+            throw new APIManagementException("Failed to obtain admin token");
+        }
 
         return null;
-    }
-
-    private PostClientInfo createClientInfoFromConfiguration(KeyManagerConfiguration configuration) {
-        System.out.println("createClientInfoFromConfiguration");
-
-        PostClientInfo postClientInfo = new PostClientInfo();
-
-        postClientInfo.setGrantTypes(BlitzConstants.GRANT_TYPES_FIELD_NAME);
-        postClientInfo.setScope(BlitzConstants.BLITZ_API_SYS_APP + " " + BlitzConstants.BLITZ_API_SYS_APP_CHG);
-
-        System.out.println("postClientInfo: " + postClientInfo);
-
-        return postClientInfo;
     }
 
     /**

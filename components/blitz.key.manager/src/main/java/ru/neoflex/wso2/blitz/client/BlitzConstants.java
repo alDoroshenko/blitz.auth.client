@@ -17,7 +17,6 @@
  */
 package ru.neoflex.wso2.blitz.client;
 
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -55,10 +54,8 @@ public class BlitzConstants {
 
     public static final String REGISTRATION_API_KEY = "API Token";
 
-    public static final String GRANT_TYPES_FIELD_NAME = "client_credentials";
-    public static final String BLITZ_API_SYS_APP = "blitz_api_sys_app";
-    public static final String BLITZ_API_SYS_APP_CHG = "blitz_api_sys_app_chg";
-
+    public static final String GRANT_TYPES_FIELD = "client_credentials";
+    public static final String SCORE_FIELD = "blitz_api_sys_app blitz_api_sys_app_chg";
 
     BlitzConstants() {
     }
