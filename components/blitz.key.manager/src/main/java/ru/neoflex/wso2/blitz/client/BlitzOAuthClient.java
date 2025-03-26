@@ -134,6 +134,41 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
                 .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
 
+        BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthAppRequest);
+        BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.setSetting(blitzClientInfo);
+
+//
+//        System.out.println("POST request to Blitz. Get Application Token");
+//
+//        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
+//        String clientSecret = oauth.getClientSecret();
+//
+//        System.out.println(clientName);
+//        System.out.println(oauth.getClientSecret());
+//        blitzAplicationTokenClient = Feign
+//                .builder()
+//                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+//                .decoder(new GsonDecoder(gson))
+//                .encoder(new FormEncoder())
+//                .logger(new Slf4jLogger())
+//                .requestInterceptor(new BasicAuthRequestInterceptor(clientName, clientSecret))
+//                .target(BlitzAdminTokenClient.class, tokenEndpoint);
+//
+//        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "default");
+//
+//        System.out.println(blitzClientTokenResponse.getAccessToken());
+//        System.out.println(blitzClientTokenResponse.getTokenType());
+//        System.out.println(blitzClientTokenResponse.getExpiresIn());
+
+        return null;
+    }
+
+    private BlitzClientInfo createBlitzClientInfo(OAuthAppRequest oAuthAppRequest) {
+        OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
+        String clientName = oAuthApplicationInfo.getClientName();
+
+        BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
+
         ArrayList<String> redirectUriPrefixes = new ArrayList<>();//TODO захардкодить через константу или получать через какое-то поле
         redirectUriPrefixes.add("https://api-manager:9443");
 
@@ -163,37 +198,13 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oauth.setResponseTypes(responseTypes);
 
         //TODO нам бы сделать билдер или метод для заполнения полей объекта
-        BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
+
         blitzClientInfo.setName(clientName);
         blitzClientInfo.setDomain("https://api-manager:9443");//TODO захардкодить через константу или получать через какое-то поле
         blitzClientInfo.setDisabled(false);
         blitzClientInfo.setOauth(oauth);
 
-        BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.setSetting(blitzClientInfo);
-
-        System.out.println("POST request to Blitz. Get Application Token");
-
-        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
-        String clientSecret = oauth.getClientSecret();
-
-        System.out.println(clientName);
-        System.out.println(oauth.getClientSecret());
-        blitzAplicationTokenClient = Feign
-                .builder()
-                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                .decoder(new GsonDecoder(gson))
-                .encoder(new FormEncoder())
-                .logger(new Slf4jLogger())
-                .requestInterceptor(new BasicAuthRequestInterceptor(clientName, clientSecret))
-                .target(BlitzAdminTokenClient.class, tokenEndpoint);
-
-        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "default");
-
-        System.out.println(blitzClientTokenResponse.getAccessToken());
-        System.out.println(blitzClientTokenResponse.getTokenType());
-        System.out.println(blitzClientTokenResponse.getExpiresIn());
-
-        return null;
+        return blitzClientInfo;
     }
 
     /**
