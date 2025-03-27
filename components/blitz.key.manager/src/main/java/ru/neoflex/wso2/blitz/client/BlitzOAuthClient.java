@@ -48,6 +48,7 @@ import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
 import ru.neoflex.wso2.blitz.client.model.Oauth;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -174,7 +175,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         Oauth oauth = new Oauth();
 
-        oauth.setClientSecret("test_Password");//TODO нужен генератор пароля
+        oauth.setClientSecret("test_Password");
 
         ArrayList<String> redirectUriPrefixes = new ArrayList<>();
         redirectUriPrefixes.add(CALLBACK_URL);
@@ -189,17 +190,23 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oauth.setDefaultAccessType("offline");
         oauth.setPixyMandatory(true);
 
-        Object parameter = oAuthApplicationInfo.getParameter(APIConstants.JSON_ADDITIONAL_PROPERTIES);
-        System.out.println("sfdsf" + parameter);
+        Object additionalParameters = oAuthApplicationInfo.getParameter(APIConstants.JSON_ADDITIONAL_PROPERTIES);
         Map<String, Object> additionalProperties = new HashMap<>();
-        if (parameter instanceof String) {
-            additionalProperties = new Gson().fromJson((String) parameter, Map.class);
+        if (additionalParameters instanceof String) {
+            additionalProperties = new Gson().fromJson((String) additionalParameters, Map.class);
         }
+
         if (additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME) instanceof String) {
             oauth.setTokenEndpointAuthMethod((String) additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME));
         }
+
         if (additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME) instanceof List) {
             oauth.setResponseTypes((List<String>) additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME));
+        }
+
+        if (oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES) instanceof String){
+            String grandTypes = (String) oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES);
+            oauth.setGrantTypes(Arrays.asList(grandTypes.split(",")));
         }
 
         blitzClientInfo.setName(clientName);
