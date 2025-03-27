@@ -125,15 +125,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             throw new APIManagementException("BlitzCustomClient: Failed to obtain application endpoint");
         }
 
-        String clientName = oAuthApplicationInfo.getClientName();
-        if (clientName == null) {
-            throw new APIManagementException("BlitzCustomClient: Failed to obtain application name");
-        }
-
-        String keyType = (String) oAuthApplicationInfo.getParameter("key_type");
-        if (keyType == null) {
-            throw new APIManagementException("BlitzCustomClient: Failed to obtain key_type");
-        }
+        String keyType = (String) oAuthApplicationInfo.getParameter(APIConstants.SUBSCRIPTION_KEY_TYPE.toLowerCase());
+        String clientName = oAuthApplicationInfo.getClientName() + "_" + keyType;
 
         blitzAplicationClient = Feign
                 .builder()
@@ -142,9 +135,10 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .encoder(new GsonEncoder(gson))
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
-                .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName+"_"+keyType.toLowerCase());
+                .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
 
         BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
+        blitzClientInfo.setName(clientName);
         BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
 
         //TODO: понять почему последний пост запрос возвращает 400, хотя он и правильный.
@@ -177,8 +171,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     private BlitzClientInfo createBlitzClientInfo(OAuthApplicationInfo oAuthApplicationInfo) {
         System.out.println("BlitzCustomClient: createBlitzClientInfo");
-
-        String clientName = oAuthApplicationInfo.getClientName();
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
         Oauth oauth = new Oauth();
@@ -213,12 +205,11 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             oauth.setResponseTypes((List<String>) additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME));
         }
 
-        if (oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES) instanceof String){
+        if (oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES) instanceof String) {
             String grandTypes = (String) oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES);
             oauth.setGrantTypes(Arrays.asList(grandTypes.split(",")));
         }
 
-        blitzClientInfo.setName(clientName);
         blitzClientInfo.setDomain(CALLBACK_URL);
         blitzClientInfo.setDisabled(false);
         blitzClientInfo.setOauth(oauth);
