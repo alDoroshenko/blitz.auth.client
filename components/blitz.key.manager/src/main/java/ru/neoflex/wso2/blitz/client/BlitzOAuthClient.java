@@ -149,7 +149,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         //TODO: понять почему последний пост запрос возвращает 400, хотя он и правильный.
 //
-//        System.out.println("POST request to Blitz. Get Application Token");
+//        System.out.println("BlitzCustomClient: POST request to Blitz. Get Application Token");
 //
 //        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
 //        String clientSecret = oauth.getClientSecret();
