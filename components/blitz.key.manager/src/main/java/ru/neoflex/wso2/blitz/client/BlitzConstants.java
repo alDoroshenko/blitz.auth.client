@@ -57,6 +57,11 @@ public class BlitzConstants {
     public static final String GRANT_TYPES_FIELD = "client_credentials";
     public static final String SCORE_FIELD = "blitz_api_sys_app blitz_api_sys_app_chg";
 
+    public static final String DEFAULT_SCORE = "default";
+
+    public static final byte PASSWORD_LENGTH = 15;
+    public static final String AVAILABLE_SYMBOLS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     BlitzConstants() {
     }
 }
