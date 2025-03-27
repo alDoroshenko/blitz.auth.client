@@ -130,6 +130,11 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             throw new APIManagementException("BlitzCustomClient: Failed to obtain application name");
         }
 
+        String keyType = (String) oAuthApplicationInfo.getParameter("key_type");
+        if (keyType == null) {
+            throw new APIManagementException("BlitzCustomClient: Failed to obtain key_type");
+        }
+
         blitzAplicationClient = Feign
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
@@ -137,7 +142,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .encoder(new GsonEncoder(gson))
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
-                .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
+                .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName+"_"+keyType.toLowerCase());
 
         BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
         BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
