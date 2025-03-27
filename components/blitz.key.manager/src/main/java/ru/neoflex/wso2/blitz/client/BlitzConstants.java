@@ -59,6 +59,9 @@ public class BlitzConstants {
 
     public static final String DEFAULT_SCORE = "default";
 
+    public static final byte PASSWORD_LENGTH = 15;
+    public static final String AVAILABLE_SYMBOLS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
     BlitzConstants() {
     }
 }
