@@ -24,6 +24,7 @@ import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
 import feign.okhttp.OkHttpClient;
 import feign.slf4j.Slf4jLogger;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.apimgt.api.APIManagementException;
@@ -89,15 +90,18 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
         String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
 
-        //TODO: добавить APIManagementException при null в стрингах
-        blitzAdminTokenClient = Feign
-                .builder()
-                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                .decoder(new GsonDecoder(gson))
-                .encoder(new FormEncoder())
-                .logger(new Slf4jLogger())
-                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
-                .target(BlitzAdminTokenClient.class, tokenEndpoint);
+        if (StringUtils.isNotEmpty(tokenEndpoint) && StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(clientSecret)) {
+            blitzAdminTokenClient = Feign
+                    .builder()
+                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .decoder(new GsonDecoder(gson))
+                    .encoder(new FormEncoder())
+                    .logger(new Slf4jLogger())
+                    .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                    .target(BlitzAdminTokenClient.class, tokenEndpoint);
+        } else {
+            throw new APIManagementException("BlitzCustomClient: Error while configuring Blitz Connector");
+        }
     }
 
 
@@ -107,42 +111,43 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         if (oAuthAppRequest == null) {
             throw new APIManagementException("BlitzCustomClient: OAuthAppRequest cannot be null.");
+        } else {
+            OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
+
+            System.out.println("BlitzCustomClient: POST request to Blitz. Get Admin Token");
+            BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
+
+            if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
+                throw new APIManagementException("BlitzCustomClient: Failed to obtain admin token");
+            }
+
+            System.out.println("BlitzCustomClient: PUT request to Blitz. Set application settings");
+
+            String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
+
+            if (appRegistrationEndpoint == null) {
+                throw new APIManagementException("BlitzCustomClient: Failed to obtain application endpoint");
+            }
+
+            String keyType = (String) oAuthApplicationInfo.getParameter(APIConstants.SUBSCRIPTION_KEY_TYPE.toLowerCase());
+            String clientName = oAuthApplicationInfo.getClientName() + "_" + keyType;
+
+            blitzAplicationClient = Feign
+                    .builder()
+                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .decoder(new GsonDecoder(gson))
+                    .encoder(new GsonEncoder(gson))
+                    .logger(new Slf4jLogger())
+                    .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
+                    .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
+
+            BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
+            blitzClientInfo.setName(clientName);
+            oAuthApplicationInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
+
+            return oAuthApplicationInfo;
         }
-        OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
-
-        System.out.println("BlitzCustomClient: POST request to Blitz. Get Admin Token");
-        BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
-
-        if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
-            throw new APIManagementException("BlitzCustomClient: Failed to obtain admin token");
-        }
-
-        System.out.println("BlitzCustomClient: PUT request to Blitz. Set application settings");
-
-        String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
-
-        if (appRegistrationEndpoint == null) {
-            throw new APIManagementException("BlitzCustomClient: Failed to obtain application endpoint");
-        }
-
-        String keyType = (String) oAuthApplicationInfo.getParameter(APIConstants.SUBSCRIPTION_KEY_TYPE.toLowerCase());
-        String clientName = oAuthApplicationInfo.getClientName() + "_" + keyType;
-
-        blitzAplicationClient = Feign
-                .builder()
-                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                .decoder(new GsonDecoder(gson))
-                .encoder(new GsonEncoder(gson))
-                .logger(new Slf4jLogger())
-                .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
-                .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
-
-        BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
-        blitzClientInfo.setName(clientName);
-        BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
-
         //TODO: понять почему последний пост запрос возвращает 400, хотя он и правильный.
-//
 //        System.out.println("BlitzCustomClient: POST request to Blitz. Get Application Token");
 //
 //        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
@@ -164,9 +169,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 //        System.out.println(blitzClientTokenResponse.getAccessToken());
 //        System.out.println(blitzClientTokenResponse.getTokenType());
 //        System.out.println(blitzClientTokenResponse.getExpiresIn());
-
-        //TODO: Добавить return OAuthApplicationInfo и метод для его конструирования
-        return null;
     }
 
     private BlitzClientInfo createBlitzClientInfo(OAuthApplicationInfo oAuthApplicationInfo) {
@@ -334,6 +336,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
         System.out.println("BlitzCustomClient: getKeyManagerConfiguration");
+
+
         return configuration;
     }
 
