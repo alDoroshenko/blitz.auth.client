@@ -189,15 +189,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oauth.setDefaultAccessType("offline");
         oauth.setPixyMandatory(true);
 
-        oauth.setTokenEndpointAuthMethod("client_secret_basic");//получить из галок в calbackurl
-
         Object parameter = oAuthApplicationInfo.getParameter(APIConstants.JSON_ADDITIONAL_PROPERTIES);
+        System.out.println("sfdsf" + parameter);
         Map<String, Object> additionalProperties = new HashMap<>();
         if (parameter instanceof String) {
             additionalProperties = new Gson().fromJson((String) parameter, Map.class);
         }
-        if (additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME) instanceof List) {
-            oauth.setGrantTypes((List<String>) additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME));
+        if (additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME) instanceof String) {
+            oauth.setTokenEndpointAuthMethod((String) additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME));
         }
         if (additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME) instanceof List) {
             oauth.setResponseTypes((List<String>) additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME));
