@@ -89,6 +89,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
         String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
 
+        //TODO: добавить APIManagementException при null в стрингах
         blitzAdminTokenClient = Feign
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
@@ -138,9 +139,10 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
                 .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
 
-        BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthAppRequest);
-        BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.setSetting(blitzClientInfo);
+        BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
+        BlitzClientInfo responseblitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
 
+        //TODO: понять почему последний пост запрос возвращает 400, хотя он и правильный.
 //
 //        System.out.println("POST request to Blitz. Get Application Token");
 //
@@ -164,20 +166,20 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 //        System.out.println(blitzClientTokenResponse.getTokenType());
 //        System.out.println(blitzClientTokenResponse.getExpiresIn());
 
+        //TODO: Добавить return OAuthApplicationInfo и метод для его конструирования
         return null;
     }
 
-    private BlitzClientInfo createBlitzClientInfo(OAuthAppRequest oAuthAppRequest) {
+    private BlitzClientInfo createBlitzClientInfo(OAuthApplicationInfo oAuthApplicationInfo) {
         System.out.println("BlitzCustomClient: createBlitzClientInfo");
 
-        OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
         String clientName = oAuthApplicationInfo.getClientName();
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
-
         Oauth oauth = new Oauth();
 
-        oauth.setClientSecret("test_Password");
+        String clientPassword = PasswordGenerator.generatePassword();
+        oauth.setClientSecret(clientPassword);
 
         ArrayList<String> redirectUriPrefixes = new ArrayList<>();
         redirectUriPrefixes.add(CALLBACK_URL);
