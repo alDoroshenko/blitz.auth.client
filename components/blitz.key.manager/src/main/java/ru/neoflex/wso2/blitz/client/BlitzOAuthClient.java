@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CALLBACK_URL;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
@@ -176,8 +177,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oauth.setClientSecret("test_Password");//TODO нужен генератор пароля
 
         ArrayList<String> redirectUriPrefixes = new ArrayList<>();
-        System.out.println("dsfsd "+oAuthApplicationInfo.getCallBackURL());
-        redirectUriPrefixes.add(oAuthApplicationInfo.getCallBackURL());
+        redirectUriPrefixes.add(CALLBACK_URL);
         oauth.setRedirectUriPrefixes(redirectUriPrefixes);
 
         ArrayList<String> scopes = new ArrayList<>();
@@ -204,7 +204,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
 
         blitzClientInfo.setName(clientName);
-        blitzClientInfo.setDomain("https://api-manager:9443");//TODO захардкодить через константу или получать через какое-то поле
+        blitzClientInfo.setDomain(CALLBACK_URL);
         blitzClientInfo.setDisabled(false);
         blitzClientInfo.setOauth(oauth);
 

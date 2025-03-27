@@ -43,7 +43,7 @@ public class BlitzConstants {
     public static final String CLIENT_RESPONSE_TYPE_NAME = "response_types";
     public static final String CLIENT_RESPONSE_TYPE_LABEL = "Response Type";
     public static final String CLIENT_RESPONSE_TYPE_TOOLTIP = "Type Of Token response";
-    public static final List<String> CLIENT_RESPONSE_TYPE_LIST = Arrays.asList("code", "token", "id_token");
+    public static final List<String> CLIENT_RESPONSE_TYPE_LIST = Arrays.asList("code", "token", "id_token", "device_code");
 
     public static final String CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME = "token_endpoint_auth_method";
     public static final String CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL = "Token endpoint Authentication Method";
@@ -58,6 +58,7 @@ public class BlitzConstants {
     public static final String SCORE_FIELD = "blitz_api_sys_app blitz_api_sys_app_chg";
 
     public static final String DEFAULT_SCORE = "default";
+    public static final String CALLBACK_URL = "https://api-manager:9443";
 
     BlitzConstants() {
     }
