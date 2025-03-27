@@ -26,7 +26,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_LIST;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LIST;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.EMPTY_DEFAULT_VALUE;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.FIELD_TYPE_INPUT;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.FIELD_TYPE_SELECT;
+
 
 @Component(
         name = "custom.configuration.component",

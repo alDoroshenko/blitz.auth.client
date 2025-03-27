@@ -39,7 +39,6 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
-import org.wso2.carbon.apimgt.impl.recommendationmgt.AccessTokenGenerator;
 import ru.neoflex.wso2.blitz.client.Interceptor.BearerTokenInterceptor;
 import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
 import ru.neoflex.wso2.blitz.client.client.BlitzAplicationClient;
@@ -50,15 +49,18 @@ import ru.neoflex.wso2.blitz.client.model.Oauth;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.DEFAULT_SCORE;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.GRANT_TYPES_FIELD;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.REGISTRATION_API_KEY;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
 
@@ -169,34 +171,37 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
 
+        Oauth oauth = new Oauth();
+
+        oauth.setClientSecret("test_Password");//TODO нужен генератор пароля
+
         ArrayList<String> redirectUriPrefixes = new ArrayList<>();
+        System.out.println("dsfsd "+oAuthApplicationInfo.getCallBackURL());
         redirectUriPrefixes.add(oAuthApplicationInfo.getCallBackURL());
+        oauth.setRedirectUriPrefixes(redirectUriPrefixes);
 
         ArrayList<String> scopes = new ArrayList<>();
         scopes.add(DEFAULT_SCORE);
-
-        ArrayList<String> grantTypes = new ArrayList<>();//получить из галок в кейгенераторе
-        grantTypes.add("authorization_code");
-        grantTypes.add("password");
-        grantTypes.add("client_credentials");
-
-        ArrayList<String> responseTypes = new ArrayList<>();//получить из галок в кейгенераторе
-        responseTypes.add("code");
-        responseTypes.add("token");
-
-        Oauth oauth = new Oauth();
-        oauth.setClientSecret("test_Password");//TODO нужен генератор пароля
-        oauth.setRedirectUriPrefixes(redirectUriPrefixes);//получить из галок в calbackurl
         oauth.setAvailableScopes(scopes);
         oauth.setDefaultScopes(scopes);
+
         oauth.setEnabled(true);
         oauth.setDefaultAccessType("offline");
         oauth.setPixyMandatory(true);
-        oauth.setTokenEndpointAuthMethod("client_secret_basic");//получить из галок в calbackurl
-        oauth.setGrantTypes(grantTypes);
-        oauth.setResponseTypes(responseTypes);
 
-        //TODO нам бы сделать билдер или метод для заполнения полей объекта
+        oauth.setTokenEndpointAuthMethod("client_secret_basic");//получить из галок в calbackurl
+
+        Object parameter = oAuthApplicationInfo.getParameter(APIConstants.JSON_ADDITIONAL_PROPERTIES);
+        Map<String, Object> additionalProperties = new HashMap<>();
+        if (parameter instanceof String) {
+            additionalProperties = new Gson().fromJson((String) parameter, Map.class);
+        }
+        if (additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME) instanceof List) {
+            oauth.setGrantTypes((List<String>) additionalProperties.get(CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME));
+        }
+        if (additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME) instanceof List) {
+            oauth.setResponseTypes((List<String>) additionalProperties.get(CLIENT_RESPONSE_TYPE_NAME));
+        }
 
         blitzClientInfo.setName(clientName);
         blitzClientInfo.setDomain("https://api-manager:9443");//TODO захардкодить через константу или получать через какое-то поле
