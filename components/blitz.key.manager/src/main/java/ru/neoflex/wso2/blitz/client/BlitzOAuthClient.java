@@ -329,7 +329,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                 .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
-        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "default");
+        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "DEFAULT_SCORE");
         if (blitzClientTokenResponse != null) {
             tokenInfo.setAccessToken(blitzClientTokenResponse.getAccessToken());
             tokenInfo.setValidityPeriod(blitzClientTokenResponse.getExpiresIn());
