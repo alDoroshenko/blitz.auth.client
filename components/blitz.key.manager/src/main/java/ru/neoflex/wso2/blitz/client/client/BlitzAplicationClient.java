@@ -8,5 +8,5 @@ import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
 public interface BlitzAplicationClient {
     @RequestLine("PUT")
     @Headers("Content-Type: application/json")
-    OAuthApplicationInfo getBlitzAplicationSettings(BlitzClientInfo blitzClientInfo);
+    BlitzClientInfo getBlitzAplicationSettings(BlitzClientInfo blitzClientInfo);
 }

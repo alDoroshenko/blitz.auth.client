@@ -31,6 +31,7 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
+import org.wso2.carbon.apimgt.api.model.ApplicationConstants;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
 import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
@@ -142,9 +143,20 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
             BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
             blitzClientInfo.setName(clientName);
-            oAuthApplicationInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
+            BlitzClientInfo responceBlitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
 
-            System.out.println("BlitzCustomClient: oAuthApplicationInfo =" +oAuthApplicationInfo.getJsonString());
+            System.out.println("BlitzCustomClient: responceBlitzClientInfo = ");
+            System.out.println("BlitzCustomClient: Name =" + responceBlitzClientInfo.getName());
+            System.out.println("BlitzCustomClient: Domain" + responceBlitzClientInfo.getDomain());
+            System.out.println("BlitzCustomClient: Oauth" + responceBlitzClientInfo.getOauth());
+
+            oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
+
+            System.out.println("BlitzCustomClient: oAuthApplicationInfo = " +
+                    oAuthApplicationInfo.getClientId() + " _ " +
+                    oAuthApplicationInfo.getClientName() + " _ " +
+                    oAuthApplicationInfo.getClientSecret()
+            );
 
             return oAuthApplicationInfo;
         }
@@ -170,6 +182,19 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 //        System.out.println(blitzClientTokenResponse.getAccessToken());
 //        System.out.println(blitzClientTokenResponse.getTokenType());
 //        System.out.println(blitzClientTokenResponse.getExpiresIn());
+    }
+
+    private OAuthApplicationInfo createOauthApplicationInfo(BlitzClientInfo responceBlitzClientInfo) {
+        OAuthApplicationInfo oAuthApplicationInfo = new OAuthApplicationInfo();
+
+        oAuthApplicationInfo.setClientId(responceBlitzClientInfo.getName() );
+        oAuthApplicationInfo.setClientName(responceBlitzClientInfo.getName() );
+        oAuthApplicationInfo.setClientSecret(responceBlitzClientInfo.getOauth().getClientSecret() );
+        if(responceBlitzClientInfo.getDomain() != null){
+            oAuthApplicationInfo.setCallBackURL(String.join(",", responceBlitzClientInfo.getDomain()));
+        }
+
+        return oAuthApplicationInfo;
     }
 
     private BlitzClientInfo createBlitzClientInfo(OAuthApplicationInfo oAuthApplicationInfo) {
@@ -337,9 +362,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
         System.out.println("BlitzCustomClient: getKeyManagerConfiguration");
-
-        System.out.println("ENABLE_TOKEN_GENERATION" +
-                configuration.getParameter(APIConstants.KeyManager.ENABLE_TOKEN_GENERATION));
+//
+//        System.out.println("ENABLE_TOKEN_GENERATION" +
+//                configuration.getParameter(APIConstants.KeyManager.ENABLE_TOKEN_GENERATION));
 
         System.out.println("GRANT_TYPE" +
                 configuration.getParameter(APIConstants.KeyManager.AVAILABLE_GRANT_TYPE));
