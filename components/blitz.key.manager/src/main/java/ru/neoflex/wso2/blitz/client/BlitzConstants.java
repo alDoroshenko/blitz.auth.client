@@ -58,7 +58,9 @@ public class BlitzConstants {
     public static final String SCORE_FIELD = "blitz_api_sys_app blitz_api_sys_app_chg";
 
     public static final String DEFAULT_SCORE = "default";
-    public static final String CALLBACK_URL = "https://api-manager:9443";
+    //public static final String CALLBACK_URL = "https://api-manager:9443";
+    public static final String ACCESS_TYPE_OFFLINE = "offline";
+
 
     public static final byte PASSWORD_LENGTH = 15;
     public static final String AVAILABLE_SYMBOLS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
