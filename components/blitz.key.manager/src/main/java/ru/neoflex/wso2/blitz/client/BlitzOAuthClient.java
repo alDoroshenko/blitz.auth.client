@@ -146,9 +146,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             BlitzClientInfo responceBlitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
 
             System.out.println("BlitzCustomClient: responceBlitzClientInfo = ");
-            System.out.println("BlitzCustomClient: Name =" + responceBlitzClientInfo.getName());
-            System.out.println("BlitzCustomClient: Domain" + responceBlitzClientInfo.getDomain());
-            System.out.println("BlitzCustomClient: Oauth" + responceBlitzClientInfo.getOauth());
+            System.out.println("BlitzCustomClient: Name " + responceBlitzClientInfo.getName());
+            System.out.println("BlitzCustomClient: Domain " + responceBlitzClientInfo.getDomain());
+            System.out.println("BlitzCustomClient: Oauth " + responceBlitzClientInfo.getOauth());
 
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
@@ -160,28 +160,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
             return oAuthApplicationInfo;
         }
-        //TODO: понять почему последний пост запрос возвращает 400, хотя он и правильный.
-//        System.out.println("BlitzCustomClient: POST request to Blitz. Get Application Token");
-//
-//        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
-//        String clientSecret = oauth.getClientSecret();
-//
-//        System.out.println(clientName);
-//        System.out.println(oauth.getClientSecret());
-//        blitzAplicationTokenClient = Feign
-//                .builder()
-//                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-//                .decoder(new GsonDecoder(gson))
-//                .encoder(new FormEncoder())
-//                .logger(new Slf4jLogger())
-//                .requestInterceptor(new BasicAuthRequestInterceptor(clientName, clientSecret))
-//                .target(BlitzAdminTokenClient.class, tokenEndpoint);
-//
-//        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "default");
-//
-//        System.out.println(blitzClientTokenResponse.getAccessToken());
-//        System.out.println(blitzClientTokenResponse.getTokenType());
-//        System.out.println(blitzClientTokenResponse.getExpiresIn());
     }
 
     private OAuthApplicationInfo createOauthApplicationInfo(BlitzClientInfo responceBlitzClientInfo) {
@@ -190,9 +168,37 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oAuthApplicationInfo.setClientId(responceBlitzClientInfo.getName());
         oAuthApplicationInfo.setClientName(responceBlitzClientInfo.getName());
         oAuthApplicationInfo.setClientSecret(responceBlitzClientInfo.getOauth().getClientSecret());
+
         if (responceBlitzClientInfo.getDomain() != null) {
-            oAuthApplicationInfo.setCallBackURL(String.join(",", responceBlitzClientInfo.getDomain()));
+            oAuthApplicationInfo.setCallBackURL(
+                    String.join(",", responceBlitzClientInfo.getDomain())
+            );
         }
+
+        if (responceBlitzClientInfo.getOauth().getGrantTypes() != null) {
+            oAuthApplicationInfo.addParameter(
+                    APIConstants.KeyManager.AVAILABLE_GRANT_TYPE,
+                    String.join(" ", responceBlitzClientInfo.getOauth().getGrantTypes())
+            );
+        }
+
+        if (StringUtils.isNotEmpty(responceBlitzClientInfo.getName())) {
+            oAuthApplicationInfo.addParameter(
+                    ApplicationConstants.OAUTH_CLIENT_NAME,
+                    responceBlitzClientInfo.getName()
+            );
+        }
+        if (StringUtils.isNotEmpty(responceBlitzClientInfo.getName())) {
+            oAuthApplicationInfo.addParameter(
+                    ApplicationConstants.OAUTH_CLIENT_ID,
+                    responceBlitzClientInfo.getName()
+            );
+        }
+        if (StringUtils.isNotEmpty(responceBlitzClientInfo.getOauth().getClientSecret())) {
+            oAuthApplicationInfo.addParameter(
+                    ApplicationConstants.OAUTH_CLIENT_SECRET,
+                    responceBlitzClientInfo.getOauth().getClientSecret()
+            );
 
         return oAuthApplicationInfo;
     }
@@ -313,9 +319,30 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     public AccessTokenInfo getNewApplicationAccessToken(AccessTokenRequest accessTokenRequest)
             throws APIManagementException {
         System.out.println("BlitzCustomClient: getNewApplicationAccessToken");
-        AccessTokenInfo tokenInfo = new AccessTokenInfo();
 
-        // todo implement the logic to get a new access token
+        AccessTokenInfo tokenInfo = new AccessTokenInfo();
+        String clientId = accessTokenRequest.getClientId();
+        String clientSecret = accessTokenRequest.getClientSecret();
+        String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
+
+        blitzAplicationTokenClient = Feign
+                .builder()
+                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                .decoder(new GsonDecoder(gson))
+                .encoder(new FormEncoder())
+                .logger(new Slf4jLogger())
+                .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                .target(BlitzAdminTokenClient.class, tokenEndpoint);
+
+        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, "DEFAULT_SCORE");
+        if (blitzClientTokenResponse != null) {
+            tokenInfo.setAccessToken(blitzClientTokenResponse.getAccessToken());
+            tokenInfo.setValidityPeriod(blitzClientTokenResponse.getExpiresIn());
+            tokenInfo.setScope(accessTokenRequest.getScope());
+        } else {
+            tokenInfo.setTokenValid(false);
+            tokenInfo.setErrorcode(APIConstants.KeyValidationStatus.API_AUTH_INVALID_CREDENTIALS);
+        }
 
         return tokenInfo;
     }
@@ -368,13 +395,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
         System.out.println("BlitzCustomClient: getKeyManagerConfiguration");
-//
-//        System.out.println("ENABLE_TOKEN_GENERATION" +
-//                configuration.getParameter(APIConstants.KeyManager.ENABLE_TOKEN_GENERATION));
-
-        System.out.println("GRANT_TYPE" +
-                configuration.getParameter(APIConstants.KeyManager.AVAILABLE_GRANT_TYPE));
-
         return configuration;
     }
 
