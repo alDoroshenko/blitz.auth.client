@@ -104,7 +104,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         }
     }
 
-
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
         System.out.println("BlitzCustomClient createApplication");
@@ -144,6 +143,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
             blitzClientInfo.setName(clientName);
             oAuthApplicationInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
+
+            System.out.println("BlitzCustomClient: oAuthApplicationInfo =" +oAuthApplicationInfo.getJsonString());
 
             return oAuthApplicationInfo;
         }
@@ -337,6 +338,11 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     public KeyManagerConfiguration getKeyManagerConfiguration() throws APIManagementException {
         System.out.println("BlitzCustomClient: getKeyManagerConfiguration");
 
+        System.out.println("ENABLE_TOKEN_GENERATION" +
+                configuration.getParameter(APIConstants.KeyManager.ENABLE_TOKEN_GENERATION));
+
+        System.out.println("GRANT_TYPE" +
+                configuration.getParameter(APIConstants.KeyManager.AVAILABLE_GRANT_TYPE));
 
         return configuration;
     }
