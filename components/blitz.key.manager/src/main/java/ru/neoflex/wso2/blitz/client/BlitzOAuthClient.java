@@ -31,7 +31,6 @@ import org.wso2.carbon.apimgt.api.APIManagementException;
 import org.wso2.carbon.apimgt.api.model.API;
 import org.wso2.carbon.apimgt.api.model.AccessTokenInfo;
 import org.wso2.carbon.apimgt.api.model.AccessTokenRequest;
-import org.wso2.carbon.apimgt.api.model.ApplicationConstants;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConfiguration;
 import org.wso2.carbon.apimgt.api.model.OAuthAppRequest;
 import org.wso2.carbon.apimgt.api.model.OAuthApplicationInfo;
@@ -41,6 +40,7 @@ import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
 import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
+import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import ru.neoflex.wso2.blitz.client.Interceptor.BearerTokenInterceptor;
 import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
 import ru.neoflex.wso2.blitz.client.client.BlitzAplicationClient;
@@ -57,8 +57,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.ACCESS_TYPE_OFFLINE;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.CALLBACK_URL;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
@@ -199,22 +199,27 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     ApplicationConstants.OAUTH_CLIENT_SECRET,
                     responceBlitzClientInfo.getOauth().getClientSecret()
             );
-        }
 
         return oAuthApplicationInfo;
     }
 
-    private BlitzClientInfo createBlitzClientInfo(OAuthApplicationInfo oAuthApplicationInfo) {
+    private BlitzClientInfo createBlitzClientInfo(OAuthApplicationInfo oAuthApplicationInfo) throws APIManagementException {
         System.out.println("BlitzCustomClient: createBlitzClientInfo");
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
         Oauth oauth = new Oauth();
+        String wso2URL = APIUtil.getServerURL();
+        System.out.println("wso2URL:" + wso2URL);
+
 
         String clientPassword = PasswordGenerator.generatePassword();
         oauth.setClientSecret(clientPassword);
-
+        String callBackURL = oAuthApplicationInfo.getCallBackURL();
         ArrayList<String> redirectUriPrefixes = new ArrayList<>();
-        redirectUriPrefixes.add(CALLBACK_URL);
+        if (callBackURL != null) {
+            redirectUriPrefixes.add(callBackURL);
+        } else redirectUriPrefixes.add(wso2URL);
+
         oauth.setRedirectUriPrefixes(redirectUriPrefixes);
 
         ArrayList<String> scopes = new ArrayList<>();
@@ -223,7 +228,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oauth.setDefaultScopes(scopes);
 
         oauth.setEnabled(true);
-        oauth.setDefaultAccessType("offline");
+        oauth.setDefaultAccessType(ACCESS_TYPE_OFFLINE);
         oauth.setPixyMandatory(true);
 
         Object additionalParameters = oAuthApplicationInfo.getParameter(APIConstants.JSON_ADDITIONAL_PROPERTIES);
@@ -245,7 +250,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             oauth.setGrantTypes(Arrays.asList(grandTypes.split(",")));
         }
 
-        blitzClientInfo.setDomain(CALLBACK_URL);
+        blitzClientInfo.setDomain(wso2URL);
         blitzClientInfo.setDisabled(false);
         blitzClientInfo.setOauth(oauth);
 
