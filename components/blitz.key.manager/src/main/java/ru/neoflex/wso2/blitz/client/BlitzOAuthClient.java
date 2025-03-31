@@ -146,11 +146,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             blitzClientInfo.setName(clientName);
             BlitzClientInfo responceBlitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
 
-            System.out.println("BlitzCustomClient: responceBlitzClientInfo = ");
-            System.out.println("BlitzCustomClient: Name " + responceBlitzClientInfo.getName());
-            System.out.println("BlitzCustomClient: Domain " + responceBlitzClientInfo.getDomain());
-            System.out.println("BlitzCustomClient: Oauth " + responceBlitzClientInfo.getOauth());
-
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
             System.out.println("BlitzCustomClient: oAuthApplicationInfo = " +
@@ -158,7 +153,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     oAuthApplicationInfo.getClientName() + " _ " +
                     oAuthApplicationInfo.getClientSecret()
             );
-
             return oAuthApplicationInfo;
         }
     }
@@ -170,9 +164,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         oAuthApplicationInfo.setClientName(responceBlitzClientInfo.getName());
         oAuthApplicationInfo.setClientSecret(responceBlitzClientInfo.getOauth().getClientSecret());
 
-        if (responceBlitzClientInfo.getDomain() != null) {
+        if (responceBlitzClientInfo.getOauth().getRedirectUriPrefixes() != null) {
             oAuthApplicationInfo.setCallBackURL(
-                    String.join(",", responceBlitzClientInfo.getDomain())
+                    String.join(",", responceBlitzClientInfo.getOauth().getRedirectUriPrefixes())
             );
         }
 
@@ -212,7 +206,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         Oauth oauth = new Oauth();
         String wso2URL = APIUtil.getServerURL();
         System.out.println("wso2URL:" + wso2URL);
-
 
         String clientPassword = PasswordGenerator.generatePassword();
         oauth.setClientSecret(clientPassword);
@@ -336,7 +329,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                 .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
-        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(GRANT_TYPES_FIELD, DEFAULT_SCORE);
+        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(accessTokenRequest.getGrantType(), DEFAULT_SCORE);
         if (blitzClientTokenResponse != null) {
             tokenInfo.setAccessToken(blitzClientTokenResponse.getAccessToken());
             tokenInfo.setValidityPeriod(blitzClientTokenResponse.getExpiresIn());
@@ -369,7 +362,18 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         if (tokenRequest == null) {
             tokenRequest = new AccessTokenRequest();
         }
-        // todo implement logic to build an access token request
+
+        if (tokenRequest.getClientId() == null) {
+            tokenRequest.setClientId(oAuthApplication.getClientId());
+        }
+
+        if (tokenRequest.getClientSecret() == null) {
+            tokenRequest.setClientSecret(oAuthApplication.getClientSecret());
+        }
+        System.out.println("BlitzCustomClient: grant type " + oAuthApplication.getParameter(APIConstants.JSON_GRANT_TYPES));
+        if (tokenRequest.getGrantType() == null) {
+            tokenRequest.setGrantType((String) oAuthApplication.getParameter(APIConstants.JSON_GRANT_TYPES));
+        }
 
         return tokenRequest;
     }
