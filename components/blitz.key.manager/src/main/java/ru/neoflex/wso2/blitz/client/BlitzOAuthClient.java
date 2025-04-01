@@ -296,6 +296,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         System.out.println("BlitzCustomClient: updateApplication: oAuthApplicationInfo Parameter" + oAuthApplicationInfo.getJsonString());
 
         try {
+
             BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
             BlitzClientInfo responseBlitzClientInfo = blitzApplicationClient.updateBlitzApplicationSettings(clientId, eTag, blitzClientInfo);
 
