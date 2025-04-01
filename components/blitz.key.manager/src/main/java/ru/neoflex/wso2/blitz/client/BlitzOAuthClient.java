@@ -71,8 +71,8 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
 public class BlitzOAuthClient extends AbstractKeyManager {
     private BlitzAdminTokenClient blitzAdminTokenClient;
-    private BlitzAplicationClient blitzAplicationClient;
-    private BlitzAdminTokenClient blitzAplicationTokenClient;
+    private BlitzAplicationClient blitzApplicationClient;
+    private BlitzAdminTokenClient blitzApplicationTokenClient;
 
     private CustomDCRClient customDCRClient;
     private IntrospectionClient introspectionClient;
@@ -101,6 +101,15 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     .logger(new Slf4jLogger())
                     .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                     .target(BlitzAdminTokenClient.class, tokenEndpoint);
+
+            blitzApplicationClient = Feign
+                    .builder()
+                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .decoder(new GsonDecoder(gson))
+                    .encoder(new GsonEncoder(gson))
+                    .logger(new Slf4jLogger())
+                    .requestInterceptor(bearerCLientTokenInterceptor)
+                    .target(BlitzApplicationClient.class, appRegistrationEndpoint);
         } else {
             throw new APIManagementException("BlitzCustomClient: Error while configuring Blitz Connector");
         }
