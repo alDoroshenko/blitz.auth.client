@@ -4,6 +4,7 @@ import feign.Headers;
 import feign.Param;
 import feign.RequestLine;
 import feign.Response;
+import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
 import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
 
 public interface BlitzApplicationClient {
@@ -12,7 +13,7 @@ public interface BlitzApplicationClient {
     BlitzClientInfo createApplication(@Param("clientId") String clientId, BlitzClientInfo blitzClientInfo);
 
     @RequestLine("GET/{clientId}")
-    Response getBlitzApplicationSettings(@Param("clientId") String clientId);
+    Response getBlitzApplicationSettings(@Param("clientId") String clientId) throws KeyManagerClientException;;
 
     @RequestLine("POST/{clientId}")
     @Headers({

@@ -42,6 +42,7 @@ import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
+import org.wso2.carbon.apimgt.impl.kmclient.KeyManagerClientException;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import ru.neoflex.wso2.blitz.client.Interceptor.BearerTokenInterceptor;
 import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
@@ -86,7 +87,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     @Override
     public void loadConfiguration(KeyManagerConfiguration keyManagerConfiguration) throws APIManagementException {
-        System.out.println("BlitzCustomClient loadConfiguration");
+        System.out.println("BlitzCustomClient: loadConfiguration");
 
         this.configuration = keyManagerConfiguration;
 
@@ -116,32 +117,32 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     .requestInterceptor(bearerCLientTokenInterceptor)
                     .target(BlitzApplicationClient.class, appRegistrationEndpoint);
         } else {
-            throw new APIManagementException("BlitzCustomClient: Error while configuring Blitz Connector");
+            throw new APIManagementException("BlitzCustomClient: loadConfiguration: Error while configuring Blitz Connector");
         }
     }
 
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
-        System.out.println("BlitzCustomClient createApplication");
+        System.out.println("BlitzCustomClient: createApplication");
 
         if (oAuthAppRequest == null) {
-            throw new APIManagementException("BlitzCustomClient: OAuthAppRequest cannot be null.");
+            throw new APIManagementException("BlitzCustomClient: createApplication: OAuthAppRequest cannot be null.");
         } else {
             OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
 
-            System.out.println("BlitzCustomClient: POST request to Blitz. Get Admin Token");
+            System.out.println("BlitzCustomClient: createApplication: POST request to Blitz. Get Admin Token");
             BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
 
             if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
-                throw new APIManagementException("BlitzCustomClient: Failed to obtain admin token");
+                throw new APIManagementException("BlitzCustomClient: createApplication: Failed to obtain admin token");
             }
 
-            System.out.println("BlitzCustomClient: PUT request to Blitz. Set application settings");
+            System.out.println("BlitzCustomClient: createApplication: PUT request to Blitz. Set application settings");
 
             String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
 
             if (appRegistrationEndpoint == null) {
-                throw new APIManagementException("BlitzCustomClient: Failed to obtain application endpoint");
+                throw new APIManagementException("BlitzCustomClient: createApplication: Failed to obtain application endpoint");
             }
 
             String keyType = (String) oAuthApplicationInfo.getParameter(APIConstants.SUBSCRIPTION_KEY_TYPE.toLowerCase());
@@ -157,16 +158,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
             try {
-                Thread.sleep(5000);
+                Thread.sleep(7000);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
 
-            System.out.println("BlitzCustomClient: oAuthApplicationInfo = " +
-                    oAuthApplicationInfo.getClientId() + " _ " +
-                    oAuthApplicationInfo.getClientName() + " _ " +
-                    oAuthApplicationInfo.getClientSecret()
-            );
+            System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientId = " + oAuthApplicationInfo.getClientId());
+            System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientName = " + oAuthApplicationInfo.getClientName());
+            System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientSecret = " + oAuthApplicationInfo.getClientSecret());
             return oAuthApplicationInfo;
         }
     }
@@ -225,7 +224,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
         Oauth oauth = new Oauth();
         String wso2URL = APIUtil.getServerURL();
-        System.out.println("wso2URL:" + wso2URL);
+        System.out.println("BlitzCustomClient: createBlitzClientInfo: wso2URL:" + wso2URL);
 
         String clientPassword = PasswordGenerator.generatePassword();
         oauth.setClientSecret(clientPassword);
@@ -286,14 +285,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         System.out.println("BlitzCustomClient: updateApplication");
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
         String clientId = oAuthApplicationInfo.getClientId();
+        System.out.println("BlitzCustomClient: updateApplication: GRANT_TYPES" + oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES));
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
         createBlitzClientInfo(oAuthApplicationInfo);
         System.out.println("BlitzCustomClient: updateApplication: POST request to Blitz. Update application settings ");
         System.out.println("BlitzCustomClient: updateApplication: eTag = " + eTag);
         System.out.println("BlitzCustomClient: updateApplication: clientId = " + clientId);
-        System.out.println("BlitzCustomClient: updateApplication: clientInfo = " + blitzClientInfo.getName() + "__" +
-                blitzClientInfo.getDomain() + "__" + blitzClientInfo.getOauth());
+        System.out.println("BlitzCustomClient: updateApplication: GRANT_TYPES = " + blitzClientInfo.getOauth().getGrantTypes());
 
         BlitzClientInfo responseBlitzClientInfo = blitzApplicationClient.updateBlitzApplicationSettings(clientId, eTag, blitzClientInfo);
 
@@ -336,27 +335,40 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
 
         if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
-            throw new APIManagementException("BlitzCustomClient: Failed to obtain admin token");
+            throw new APIManagementException("BlitzCustomClient: retrieveApplication: Failed to obtain admin token");
         }
 
         bearerCLientTokenInterceptor.setToken(blitzAdminTokenResponse.getAccessToken());
-
-        Response response = blitzApplicationClient.getBlitzApplicationSettings(clientId);
-        eTag = response.headers().get("ETag").stream().findFirst().orElseThrow(() -> new APIManagementException("Header not found"));
-        System.out.println("BlitzCustomClient: retrieveApplication: eTag = " + eTag);
-
-        String jsonBody = null;
         try {
-            jsonBody = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            Response response = blitzApplicationClient.getBlitzApplicationSettings(clientId);
+
+            eTag = response.headers().get("ETag").stream().findFirst().orElseThrow(() -> new APIManagementException("BlitzCustomClient: retrieveApplication: Header not found"));
+            System.out.println("BlitzCustomClient: retrieveApplication: eTag = " + eTag);
+
+            String jsonBody = null;
+            try {
+                jsonBody = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            System.out.println("BlitzCustomClient: retrieveApplication: response.body = " + jsonBody);
+
+            Gson gson = new Gson();
+
+            BlitzClientInfo responceBlitzClientInfo = gson.fromJson(jsonBody, BlitzClientInfo.class);
+
+            OAuthApplicationInfo oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientId" +  oAuthApplicationInfo.getClientId());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientName" +  oAuthApplicationInfo.getClientName());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientSecret" +  oAuthApplicationInfo.getClientSecret());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo CallBackURL" +  oAuthApplicationInfo.getCallBackURL());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo Parameter" +  oAuthApplicationInfo.getJsonString());
+            return oAuthApplicationInfo;
+        } catch (
+                KeyManagerClientException e) {
+            handleException("BlitzCustomClient: retrieveApplication: Error while retrieving Blitz Application", e);
+            return null;
         }
-        System.out.println("BlitzCustomClient: retrieveApplication: response.body = " + jsonBody);
-
-        Gson gson = new Gson();
-        BlitzClientInfo responceBlitzClientInfo = gson.fromJson(jsonBody, BlitzClientInfo.class);
-
-        return createOauthApplicationInfo(responceBlitzClientInfo);
     }
 
     /**
