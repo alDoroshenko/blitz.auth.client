@@ -71,11 +71,10 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
 public class BlitzOAuthClient extends AbstractKeyManager {
     private BlitzAdminTokenClient blitzAdminTokenClient;
+
     private BlitzAplicationClient blitzApplicationClient;
     private BlitzAdminTokenClient blitzApplicationTokenClient;
-
-    private CustomDCRClient customDCRClient;
-    private IntrospectionClient introspectionClient;
+    private BearerTokenInterceptor bearerCLientTokenInterceptor = new BearerTokenInterceptor();
 
     private final Gson gson = new Gson();
 
