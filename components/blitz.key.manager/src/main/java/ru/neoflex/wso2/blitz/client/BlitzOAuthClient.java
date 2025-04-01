@@ -91,6 +91,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
         String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
         String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
+        String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
 
         if (StringUtils.isNotEmpty(tokenEndpoint) && StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(clientSecret)) {
             blitzAdminTokenClient = Feign
