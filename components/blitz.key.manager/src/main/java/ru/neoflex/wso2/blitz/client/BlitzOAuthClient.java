@@ -45,6 +45,7 @@ import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import ru.neoflex.wso2.blitz.client.Interceptor.BearerTokenInterceptor;
 import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
 import ru.neoflex.wso2.blitz.client.client.BlitzAplicationClient;
+import ru.neoflex.wso2.blitz.client.client.BlitzApplicationClient;
 import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
 import ru.neoflex.wso2.blitz.client.model.BlitzAdminTokenResponse;
 import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
@@ -72,7 +73,7 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 public class BlitzOAuthClient extends AbstractKeyManager {
     private BlitzAdminTokenClient blitzAdminTokenClient;
 
-    private BlitzAplicationClient blitzApplicationClient;
+    private BlitzApplicationClient blitzApplicationClient;
     private BlitzAdminTokenClient blitzApplicationTokenClient;
     private BearerTokenInterceptor bearerCLientTokenInterceptor = new BearerTokenInterceptor();
 
