@@ -251,6 +251,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             oauth.setGrantTypes(Arrays.asList(grandTypes.split(",")));
         }
 
+        blitzClientInfo.setName(oAuthApplicationInfo.getClientName());
         blitzClientInfo.setDomain(wso2URL);
         blitzClientInfo.setDisabled(false);
         blitzClientInfo.setOauth(oauth);
@@ -270,14 +271,19 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     public OAuthApplicationInfo updateApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
         System.out.println("BlitzCustomClient: updateApplication");
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
-        System.out.println("BlitzCustomClient: updateApplication: ClientId = " + oAuthApplicationInfo.getClientId());
+        String clientId = oAuthApplicationInfo.getClientId();
 
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
+        createBlitzClientInfo(oAuthApplicationInfo);
+        System.out.println("BlitzCustomClient: updateApplication: POST request to Blitz. Update application settings ");
+        System.out.println("BlitzCustomClient: updateApplication: eTag = " + eTag);
+        System.out.println("BlitzCustomClient: updateApplication: clientId = " + clientId);
+        System.out.println("BlitzCustomClient: updateApplication: clientInfo = " + blitzClientInfo.getName() + "__" +
+                blitzClientInfo.getDomain() + "__" + blitzClientInfo.getOauth());
 
-//        blitzApplicationClient.updateBlitzApplicationSettings(eTag, BlitzClientInfo);
-        //todo update oauth app in the authorization server
+        BlitzClientInfo responseBlitzClientInfo = blitzApplicationClient.updateBlitzApplicationSettings(clientId, eTag, blitzClientInfo);
 
-        return null;
+        return createOauthApplicationInfo(responseBlitzClientInfo);
     }
 
     @Override

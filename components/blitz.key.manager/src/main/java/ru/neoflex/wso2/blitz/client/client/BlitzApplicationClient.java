@@ -14,6 +14,10 @@ public interface BlitzApplicationClient {
     @RequestLine("GET/{clientId}")
     Response getBlitzApplicationSettings(@Param("clientId") String clientId);
 
-//    @RequestLine("POST/{clientId}")
-//    updateBlitzApplicationSettings()
+    @RequestLine("POST/{clientId}")
+    @Headers({
+            "Content-Type: application/json",
+            "if-Match: {eTag}"
+    })
+    BlitzClientInfo updateBlitzApplicationSettings(@Param("clientId") String clientId, @Param("eTag") String eTag, BlitzClientInfo blitzClientInfo);
 }
