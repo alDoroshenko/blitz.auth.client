@@ -158,7 +158,9 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
             try {
+
                 Thread.sleep(7000);
+
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
