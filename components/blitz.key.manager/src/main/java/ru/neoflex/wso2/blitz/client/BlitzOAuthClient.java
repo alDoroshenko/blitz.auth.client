@@ -19,6 +19,8 @@ package ru.neoflex.wso2.blitz.client;
 
 import com.google.gson.Gson;
 import feign.Feign;
+import feign.Response;
+import feign.Util;
 import feign.auth.BasicAuthRequestInterceptor;
 import feign.gson.GsonDecoder;
 import feign.gson.GsonEncoder;
@@ -40,16 +42,16 @@ import org.wso2.carbon.apimgt.api.model.URITemplate;
 import org.wso2.carbon.apimgt.impl.APIConstants;
 import org.wso2.carbon.apimgt.impl.AbstractKeyManager;
 import org.wso2.carbon.apimgt.impl.kmclient.FormEncoder;
-import org.wso2.carbon.apimgt.impl.kmclient.model.IntrospectionClient;
 import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import ru.neoflex.wso2.blitz.client.Interceptor.BearerTokenInterceptor;
 import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
-import ru.neoflex.wso2.blitz.client.client.BlitzAplicationClient;
-import ru.neoflex.wso2.blitz.client.client.CustomDCRClient;
+import ru.neoflex.wso2.blitz.client.client.BlitzApplicationClient;
 import ru.neoflex.wso2.blitz.client.model.BlitzAdminTokenResponse;
 import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
 import ru.neoflex.wso2.blitz.client.model.Oauth;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,13 +73,13 @@ import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
 
 public class BlitzOAuthClient extends AbstractKeyManager {
     private BlitzAdminTokenClient blitzAdminTokenClient;
-    private BlitzAplicationClient blitzAplicationClient;
-    private BlitzAdminTokenClient blitzAplicationTokenClient;
 
-    private CustomDCRClient customDCRClient;
-    private IntrospectionClient introspectionClient;
+    private BlitzApplicationClient blitzApplicationClient;
+    private BlitzAdminTokenClient blitzApplicationTokenClient;
+    private BearerTokenInterceptor bearerCLientTokenInterceptor = new BearerTokenInterceptor();
 
     private final Gson gson = new Gson();
+    private String eTag;
 
     private static final Log log = LogFactory.getLog(BlitzOAuthClient.class);
 
@@ -91,6 +93,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
         String clientId = (String) configuration.getParameter(CLIENT_ID_NAME);
         String clientSecret = (String) configuration.getParameter(CLIENT_SECRET_NAME);
+        String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
 
         if (StringUtils.isNotEmpty(tokenEndpoint) && StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(clientSecret)) {
             blitzAdminTokenClient = Feign
@@ -101,6 +104,15 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     .logger(new Slf4jLogger())
                     .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                     .target(BlitzAdminTokenClient.class, tokenEndpoint);
+
+            blitzApplicationClient = Feign
+                    .builder()
+                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .decoder(new GsonDecoder(gson))
+                    .encoder(new GsonEncoder(gson))
+                    .logger(new Slf4jLogger())
+                    .requestInterceptor(bearerCLientTokenInterceptor)
+                    .target(BlitzApplicationClient.class, appRegistrationEndpoint);
         } else {
             throw new APIManagementException("BlitzCustomClient: Error while configuring Blitz Connector");
         }
@@ -133,18 +145,12 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             String keyType = (String) oAuthApplicationInfo.getParameter(APIConstants.SUBSCRIPTION_KEY_TYPE.toLowerCase());
             String clientName = oAuthApplicationInfo.getClientName() + "_" + keyType;
 
-            blitzAplicationClient = Feign
-                    .builder()
-                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                    .decoder(new GsonDecoder(gson))
-                    .encoder(new GsonEncoder(gson))
-                    .logger(new Slf4jLogger())
-                    .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
-                    .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
-
             BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
             blitzClientInfo.setName(clientName);
-            BlitzClientInfo responceBlitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
+
+            bearerCLientTokenInterceptor.setToken(blitzAdminTokenResponse.getAccessToken());
+
+            BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.setBlitzApplicationSettings(clientName, blitzClientInfo);
 
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
@@ -263,6 +269,12 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public OAuthApplicationInfo updateApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
         System.out.println("BlitzCustomClient: updateApplication");
+        OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
+        System.out.println("BlitzCustomClient: updateApplication: ClientId = " + oAuthApplicationInfo.getClientId());
+
+        BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
+
+//        blitzApplicationClient.updateBlitzApplicationSettings(eTag, BlitzClientInfo);
         //todo update oauth app in the authorization server
 
         return null;
@@ -299,8 +311,32 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public OAuthApplicationInfo retrieveApplication(String clientId) throws APIManagementException {
         System.out.println("BlitzCustomClient: retrieveApplication");
-        //todo retrieve oauth app in the authorization server
-        return null;
+
+        System.out.println("BlitzCustomClient: retrieveApplication: POST request to Blitz. Get Admin Token");
+        BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
+
+        if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
+            throw new APIManagementException("BlitzCustomClient: Failed to obtain admin token");
+        }
+
+        bearerCLientTokenInterceptor.setToken(blitzAdminTokenResponse.getAccessToken());
+
+        Response response = blitzApplicationClient.getBlitzApplicationSettings(clientId);
+        eTag = response.headers().get("ETag").stream().findFirst().orElseThrow(() -> new APIManagementException("Header not found"));
+        System.out.println("BlitzCustomClient: retrieveApplication: eTag = " + eTag);
+
+        String jsonBody = null;
+        try {
+            jsonBody = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println("BlitzCustomClient: retrieveApplication: response.body = " + jsonBody);
+
+        Gson gson = new Gson();
+        BlitzClientInfo responceBlitzClientInfo = gson.fromJson(jsonBody, BlitzClientInfo.class);
+
+        return createOauthApplicationInfo(responceBlitzClientInfo);
     }
 
     /**
@@ -320,7 +356,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         String clientSecret = accessTokenRequest.getClientSecret();
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
 
-        blitzAplicationTokenClient = Feign
+        blitzApplicationTokenClient = Feign
                 .builder()
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
@@ -329,7 +365,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
                 .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
-        BlitzAdminTokenResponse blitzClientTokenResponse = blitzAplicationTokenClient.getToken(accessTokenRequest.getGrantType(), DEFAULT_SCORE);
+        BlitzAdminTokenResponse blitzClientTokenResponse = blitzApplicationTokenClient.getToken(accessTokenRequest.getGrantType(), DEFAULT_SCORE);
         if (blitzClientTokenResponse != null) {
             tokenInfo.setAccessToken(blitzClientTokenResponse.getAccessToken());
             tokenInfo.setValidityPeriod(blitzClientTokenResponse.getExpiresIn());
