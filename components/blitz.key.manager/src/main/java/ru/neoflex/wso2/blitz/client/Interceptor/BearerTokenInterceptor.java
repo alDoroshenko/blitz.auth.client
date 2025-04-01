@@ -6,7 +6,14 @@ import feign.RequestTemplate;
 import java.util.Objects;
 
 public class BearerTokenInterceptor implements RequestInterceptor {
-    private final String token;
+    private String token;
+    public BearerTokenInterceptor() {
+        this.token = "Non Valid Token";
+    }
+
+    public void setToken (String token) {
+        this.token = Objects.requireNonNull(token);
+    }
 
     public BearerTokenInterceptor(String token) {
         this.token = Objects.requireNonNull(token);
