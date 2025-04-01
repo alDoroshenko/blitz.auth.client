@@ -143,18 +143,12 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             String keyType = (String) oAuthApplicationInfo.getParameter(APIConstants.SUBSCRIPTION_KEY_TYPE.toLowerCase());
             String clientName = oAuthApplicationInfo.getClientName() + "_" + keyType;
 
-            blitzAplicationClient = Feign
-                    .builder()
-                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
-                    .decoder(new GsonDecoder(gson))
-                    .encoder(new GsonEncoder(gson))
-                    .logger(new Slf4jLogger())
-                    .requestInterceptor(new BearerTokenInterceptor(blitzAdminTokenResponse.getAccessToken()))
-                    .target(BlitzAplicationClient.class, appRegistrationEndpoint + clientName);
-
             BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
             blitzClientInfo.setName(clientName);
-            BlitzClientInfo responceBlitzClientInfo = blitzAplicationClient.getBlitzAplicationSettings(blitzClientInfo);
+
+            bearerCLientTokenInterceptor.setToken(blitzAdminTokenResponse.getAccessToken());
+
+            BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.setBlitzApplicationSettings(clientName, blitzClientInfo);
 
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
