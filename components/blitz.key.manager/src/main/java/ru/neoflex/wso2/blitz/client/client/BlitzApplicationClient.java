@@ -13,4 +13,7 @@ public interface BlitzApplicationClient {
 
     @RequestLine("GET/{clientId}")
     Response getBlitzApplicationSettings(@Param("clientId") String clientId);
+
+//    @RequestLine("POST/{clientId}")
+//    updateBlitzApplicationSettings()
 }
