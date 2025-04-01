@@ -98,6 +98,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         if (StringUtils.isNotEmpty(tokenEndpoint) && StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(clientSecret)) {
             blitzAdminTokenClient = Feign
                     .builder()
+                    //.client(new OkHttpClient())
                     .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                     .decoder(new GsonDecoder(gson))
                     .encoder(new FormEncoder())
@@ -107,6 +108,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
             blitzApplicationClient = Feign
                     .builder()
+                    //.client(new OkHttpClient())
                     .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                     .decoder(new GsonDecoder(gson))
                     .encoder(new GsonEncoder(gson))
@@ -150,9 +152,15 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
             bearerCLientTokenInterceptor.setToken(blitzAdminTokenResponse.getAccessToken());
 
-            BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.setBlitzApplicationSettings(clientName, blitzClientInfo);
+            BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.createApplication(clientName, blitzClientInfo);
 
             oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
+
+            try {
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
 
             System.out.println("BlitzCustomClient: oAuthApplicationInfo = " +
                     oAuthApplicationInfo.getClientId() + " _ " +
@@ -200,6 +208,12 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     ApplicationConstants.OAUTH_CLIENT_SECRET,
                     responceBlitzClientInfo.getOauth().getClientSecret()
             );
+        }
+
+        if (responceBlitzClientInfo.getOauth().getResponseTypes() != null) {
+            oAuthApplicationInfo.addParameter(
+                    CLIENT_RESPONSE_TYPE_NAME,
+                    responceBlitzClientInfo.getOauth().getResponseTypes());
         }
 
         return oAuthApplicationInfo;
@@ -358,6 +372,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         blitzApplicationTokenClient = Feign
                 .builder()
+                // .client(new OkHttpClient())
                 .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
                 .encoder(new FormEncoder())
