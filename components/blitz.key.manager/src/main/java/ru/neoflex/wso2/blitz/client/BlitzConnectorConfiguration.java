@@ -23,6 +23,7 @@ import org.wso2.carbon.apimgt.api.model.ConfigurationDto;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConnectorConfiguration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -108,7 +109,6 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
         return configurationDtoList;
     }
 
-
     @Override
     public List<ConfigurationDto> getApplicationConfigurations() {
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
@@ -125,6 +125,7 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
                         CLIENT_RESPONSE_TYPE_LIST,
                         true
                 ));
+
         configurationDtoList
                 .add(new ConfigurationDto(
                         CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME,

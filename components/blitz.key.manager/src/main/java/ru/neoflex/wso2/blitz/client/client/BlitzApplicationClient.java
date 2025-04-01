@@ -10,15 +10,15 @@ import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
 public interface BlitzApplicationClient {
     @RequestLine("PUT/{clientId}")
     @Headers("Content-Type: application/json")
-    BlitzClientInfo createApplication(@Param("clientId") String clientId, BlitzClientInfo blitzClientInfo);
+    BlitzClientInfo createApplication(@Param("clientId") String clientId, BlitzClientInfo blitzClientInfo) throws KeyManagerClientException;
 
     @RequestLine("GET/{clientId}")
-    Response getBlitzApplicationSettings(@Param("clientId") String clientId) throws KeyManagerClientException;;
+    Response getBlitzApplicationSettings(@Param("clientId") String clientId) throws KeyManagerClientException;
 
     @RequestLine("POST/{clientId}")
     @Headers({
             "Content-Type: application/json",
             "if-Match: {eTag}"
     })
-    BlitzClientInfo updateBlitzApplicationSettings(@Param("clientId") String clientId, @Param("eTag") String eTag, BlitzClientInfo blitzClientInfo);
+    BlitzClientInfo updateBlitzApplicationSettings(@Param("clientId") String clientId, @Param("eTag") String eTag, BlitzClientInfo blitzClientInfo) throws KeyManagerClientException;
 }

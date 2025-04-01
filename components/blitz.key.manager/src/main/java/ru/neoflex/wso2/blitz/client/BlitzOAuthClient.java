@@ -152,21 +152,24 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             blitzClientInfo.setName(clientName);
 
             bearerCLientTokenInterceptor.setToken(blitzAdminTokenResponse.getAccessToken());
-
-            BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.createApplication(clientName, blitzClientInfo);
-
-            oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
-
             try {
-                Thread.sleep(7000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+                BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.createApplication(clientName, blitzClientInfo);
+                oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
 
-            System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientId = " + oAuthApplicationInfo.getClientId());
-            System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientName = " + oAuthApplicationInfo.getClientName());
-            System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientSecret = " + oAuthApplicationInfo.getClientSecret());
-            return oAuthApplicationInfo;
+                try {
+                    Thread.sleep(7000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientId = " + oAuthApplicationInfo.getClientId());
+                System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientName = " + oAuthApplicationInfo.getClientName());
+                System.out.println("BlitzCustomClient: createApplication: oAuthApplicationInfo clientSecret = " + oAuthApplicationInfo.getClientSecret());
+
+                return oAuthApplicationInfo;
+            } catch (KeyManagerClientException e) {
+                handleException("BlitzCustomClient: updateApplication: Error while updating Blitz Application", e);
+                return null;
+            }
         }
     }
 
@@ -285,18 +288,22 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         System.out.println("BlitzCustomClient: updateApplication");
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
         String clientId = oAuthApplicationInfo.getClientId();
-        System.out.println("BlitzCustomClient: updateApplication: GRANT_TYPES" + oAuthApplicationInfo.getParameter(APIConstants.JSON_GRANT_TYPES));
 
-        BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
-        createBlitzClientInfo(oAuthApplicationInfo);
-        System.out.println("BlitzCustomClient: updateApplication: POST request to Blitz. Update application settings ");
-        System.out.println("BlitzCustomClient: updateApplication: eTag = " + eTag);
-        System.out.println("BlitzCustomClient: updateApplication: clientId = " + clientId);
-        System.out.println("BlitzCustomClient: updateApplication: GRANT_TYPES = " + blitzClientInfo.getOauth().getGrantTypes());
+        System.out.println("BlitzCustomClient: updateApplication: oAuthApplicationInfo ClientId" + oAuthApplicationInfo.getClientId());
+        System.out.println("BlitzCustomClient: updateApplication: oAuthApplicationInfo ClientName" + oAuthApplicationInfo.getClientName());
+        System.out.println("BlitzCustomClient: updateApplication: oAuthApplicationInfo ClientSecret" + oAuthApplicationInfo.getClientSecret());
+        System.out.println("BlitzCustomClient: updateApplication: oAuthApplicationInfo CallBackURL" + oAuthApplicationInfo.getCallBackURL());
+        System.out.println("BlitzCustomClient: updateApplication: oAuthApplicationInfo Parameter" + oAuthApplicationInfo.getJsonString());
 
-        BlitzClientInfo responseBlitzClientInfo = blitzApplicationClient.updateBlitzApplicationSettings(clientId, eTag, blitzClientInfo);
+        try {
+            BlitzClientInfo blitzClientInfo = createBlitzClientInfo(oAuthApplicationInfo);
+            BlitzClientInfo responseBlitzClientInfo = blitzApplicationClient.updateBlitzApplicationSettings(clientId, eTag, blitzClientInfo);
 
-        return createOauthApplicationInfo(responseBlitzClientInfo);
+            return createOauthApplicationInfo(responseBlitzClientInfo);
+        } catch (KeyManagerClientException e) {
+            handleException("BlitzCustomClient: updateApplication: Error while updating Blitz Application", e);
+            return null;
+        }
     }
 
     @Override
@@ -358,11 +365,11 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             BlitzClientInfo responceBlitzClientInfo = gson.fromJson(jsonBody, BlitzClientInfo.class);
 
             OAuthApplicationInfo oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
-            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientId" +  oAuthApplicationInfo.getClientId());
-            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientName" +  oAuthApplicationInfo.getClientName());
-            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientSecret" +  oAuthApplicationInfo.getClientSecret());
-            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo CallBackURL" +  oAuthApplicationInfo.getCallBackURL());
-            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo Parameter" +  oAuthApplicationInfo.getJsonString());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientId" + oAuthApplicationInfo.getClientId());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientName" + oAuthApplicationInfo.getClientName());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo ClientSecret" + oAuthApplicationInfo.getClientSecret());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo CallBackURL" + oAuthApplicationInfo.getCallBackURL());
+            System.out.println("BlitzCustomClient: retrieveApplication: oAuthApplicationInfo Parameter" + oAuthApplicationInfo.getJsonString());
             return oAuthApplicationInfo;
         } catch (
                 KeyManagerClientException e) {
