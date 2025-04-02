@@ -14,7 +14,7 @@ import java.io.IOException;
 import static feign.FeignException.errorStatus;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-public class CustomErrorDecoder implements ErrorDecoder {
+public class BlitzErrorDecoder implements ErrorDecoder {
 
     @Override
     public Exception decode(String s, Response response) {
