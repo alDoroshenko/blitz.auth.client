@@ -21,4 +21,10 @@ public interface BlitzApplicationClient {
             "if-Match: {eTag}"
     })
     BlitzClientInfo updateBlitzApplicationSettings(@Param("clientId") String clientId, @Param("eTag") String eTag, BlitzClientInfo blitzClientInfo) throws KeyManagerClientException;
+
+    @RequestLine("DELETE/{clientId}")
+    @Headers({
+            "if-Match: {eTag}"
+    })
+    void deleteApplication(@Param("clientId") String clientId, @Param("eTag") String eTag) throws KeyManagerClientException;
 }
