@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static com.sun.jersey.api.Responses.NOT_FOUND;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.ACCESS_TYPE_OFFLINE;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
 import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
@@ -85,8 +86,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     @Override
     public void loadConfiguration(KeyManagerConfiguration keyManagerConfiguration) throws APIManagementException {
-        System.out.println("BlitzCustomClient: loadConfiguration");
-
+        log.info("BlitzCustomClient: loadConfiguration");
         this.configuration = keyManagerConfiguration;
 
         String tokenEndpoint = (String) configuration.getParameter(APIConstants.KeyManager.TOKEN_ENDPOINT);
@@ -103,6 +103,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     .encoder(new FormEncoder())
                     .logger(new Slf4jLogger())
                     .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                    .errorDecoder(new BlitzErrorDecoder())
                     .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
             blitzApplicationClient = Feign
@@ -113,6 +114,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     .encoder(new GsonEncoder(gson))
                     .logger(new Slf4jLogger())
                     .requestInterceptor(bearerCLientTokenInterceptor)
+                    .errorDecoder(new BlitzErrorDecoder())
                     .target(BlitzApplicationClient.class, appRegistrationEndpoint);
         } else {
             throw new APIManagementException("BlitzCustomClient: loadConfiguration: Error while configuring Blitz Connector");
@@ -121,21 +123,20 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     @Override
     public OAuthApplicationInfo createApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
-        System.out.println("BlitzCustomClient: createApplication");
+        log.info("BlitzCustomClient: createApplication ");
 
         if (oAuthAppRequest == null) {
             throw new APIManagementException("BlitzCustomClient: createApplication: OAuthAppRequest cannot be null.");
         } else {
             OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
-
-            System.out.println("BlitzCustomClient: createApplication: POST request to Blitz. Get Admin Token");
+            log.info("BlitzCustomClient: createApplication: POST request to Blitz. Get Admin Token ");
             BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
 
             if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
                 throw new APIManagementException("BlitzCustomClient: createApplication: Failed to obtain admin token");
             }
 
-            System.out.println("BlitzCustomClient: createApplication: PUT request to Blitz. Set application settings");
+            log.info("BlitzCustomClient: createApplication: PUT request to Blitz. Set application settings");
 
             String appRegistrationEndpoint = (String) configuration.getParameter(APPLICATION_REGISTRATION_ENDPOINT_NAME);
 
@@ -219,7 +220,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         BlitzClientInfo blitzClientInfo = new BlitzClientInfo();
         Oauth oauth = new Oauth();
         String wso2URL = APIUtil.getServerURL();
-        System.out.println("BlitzCustomClient: createBlitzClientInfo: wso2URL:" + wso2URL);
+        log.info("BlitzCustomClient: createBlitzClientInfo: wso2URL:" + wso2URL);
 
         String clientPassword = PasswordGenerator.generatePassword();
         oauth.setClientSecret(clientPassword);
@@ -276,7 +277,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public OAuthApplicationInfo updateApplication(OAuthAppRequest oAuthAppRequest) throws APIManagementException {
-        System.out.println("BlitzCustomClient: updateApplication");
+        log.info("BlitzCustomClient: updateApplication");
         OAuthApplicationInfo oAuthApplicationInfo = oAuthAppRequest.getOAuthApplicationInfo();
         String clientId = oAuthApplicationInfo.getClientId();
         try {
@@ -292,7 +293,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     @Override
     public OAuthApplicationInfo updateApplicationOwner(OAuthAppRequest appInfoDTO, String owner) {
-        System.out.println("BlitzCustomClient: updateApplicationOwner");
+        log.info("BlitzCustomClient: updateApplicationOwner");
         return null;
     }
 
@@ -304,12 +305,14 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public void deleteApplication(String clientId) throws APIManagementException {
-        System.out.println("BlitzCustomClient: deleteApplication");
-        retrieveApplication(clientId);
-        try {
-            blitzApplicationClient.deleteApplication(clientId, eTag);
-        } catch (KeyManagerClientException e) {
-            throw new RuntimeException(e);
+        log.info("BlitzCustomClient: deleteApplication");
+        OAuthApplicationInfo applicationInfo = retrieveApplication(clientId);
+        if (applicationInfo != null) {
+            try {
+                blitzApplicationClient.deleteApplication(clientId, eTag);
+            } catch (KeyManagerClientException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
@@ -322,7 +325,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public OAuthApplicationInfo retrieveApplication(String clientId) throws APIManagementException {
-        System.out.println("BlitzCustomClient: retrieveApplication: POST request to Blitz. Get Admin Token");
+        log.info("BlitzCustomClient: retrieveApplication: POST request to Blitz. Get Admin Token");
         BlitzAdminTokenResponse blitzAdminTokenResponse = blitzAdminTokenClient.getToken(GRANT_TYPES_FIELD, SCORE_FIELD);
 
         if (blitzAdminTokenResponse == null || blitzAdminTokenResponse.getAccessToken() == null) {
@@ -333,15 +336,19 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         try {
             Response response = blitzApplicationClient.getBlitzApplicationSettings(clientId);
+            if (response.status() == NOT_FOUND) {
+                log.info("BlitzCustomClient: retrieveApplication: application not found in Blitz" );
+                return null;
+            }
             eTag = response.headers().get("ETag").stream().findFirst().orElseThrow(() -> new APIManagementException("BlitzCustomClient: retrieveApplication: Header not found"));
-            System.out.println("BlitzCustomClient: retrieveApplication: eTag = " + eTag);
+            log.info("BlitzCustomClient: retrieveApplication: eTag = " + eTag);
             String jsonBody = null;
             try {
                 jsonBody = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            System.out.println("BlitzCustomClient: retrieveApplication: response.body = " + jsonBody);
+            log.info("BlitzCustomClient: retrieveApplication: response.body = " + jsonBody);
 
             Gson gson = new Gson();
             BlitzClientInfo responceBlitzClientInfo = gson.fromJson(jsonBody, BlitzClientInfo.class);
@@ -364,7 +371,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public AccessTokenInfo getNewApplicationAccessToken(AccessTokenRequest accessTokenRequest) {
-        System.out.println("BlitzCustomClient: getNewApplicationAccessToken");
+        log.info("BlitzCustomClient: getNewApplicationAccessToken");
 
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
         String clientId = accessTokenRequest.getClientId();
@@ -379,9 +386,10 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                 .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
                 .requestInterceptor(new BasicAuthRequestInterceptor(clientId, clientSecret))
+                .errorDecoder(new BlitzErrorDecoder())
                 .target(BlitzAdminTokenClient.class, tokenEndpoint);
 
-        BlitzAdminTokenResponse blitzClientTokenResponse = blitzApplicationTokenClient.getToken(accessTokenRequest.getGrantType(), DEFAULT_SCORE);
+        BlitzAdminTokenResponse blitzClientTokenResponse = blitzApplicationTokenClient.getToken(GRANT_TYPES_FIELD, DEFAULT_SCORE);
         if (blitzClientTokenResponse != null) {
             tokenInfo.setAccessToken(blitzClientTokenResponse.getAccessToken());
             tokenInfo.setValidityPeriod(blitzClientTokenResponse.getExpiresIn());
@@ -405,7 +413,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     @Override
     public AccessTokenRequest buildAccessTokenRequestFromOAuthApp(
             OAuthApplicationInfo oAuthApplication, AccessTokenRequest tokenRequest) {
-        System.out.println("BlitzCustomClient: buildAccessTokenRequestFromOAuthApp");
+        log.info("BlitzCustomClient: buildAccessTokenRequestFromOAuthApp");
         if (oAuthApplication == null) {
             return tokenRequest;
         }
@@ -420,7 +428,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         if (tokenRequest.getClientSecret() == null) {
             tokenRequest.setClientSecret(oAuthApplication.getClientSecret());
         }
-        System.out.println("BlitzCustomClient: grant type " + oAuthApplication.getParameter(APIConstants.JSON_GRANT_TYPES));
+        log.info("BlitzCustomClient: grant type " + oAuthApplication.getParameter(APIConstants.JSON_GRANT_TYPES));
         if (tokenRequest.getGrantType() == null) {
             tokenRequest.setGrantType((String) oAuthApplication.getParameter(APIConstants.JSON_GRANT_TYPES));
         }
@@ -438,25 +446,22 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public AccessTokenInfo getTokenMetaData(String accessToken) {
-        System.out.println("BlitzCustomClient: getTokenMetaData");
-        if (log.isDebugEnabled()) {
-            log.debug(String.format("Getting access token metadata from authorization server. Access token %s",
-                    accessToken));
-        }
+        log.info(String.format("Getting access token metadata from authorization server. Access token %s",
+                accessToken));
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
-// todo implemnt logic to get access token meta data from the introspect endpoint
+        // todo implemnt logic to get access token meta data from the introspect endpoint
         return tokenInfo;
     }
 
     @Override
     public KeyManagerConfiguration getKeyManagerConfiguration() {
-        System.out.println("BlitzCustomClient: getKeyManagerConfiguration");
+        log.info("BlitzCustomClient: getKeyManagerConfiguration");
         return configuration;
     }
 
     @Override
     public OAuthApplicationInfo buildFromJSON(String s) {
-        System.out.println("BlitzCustomClient: buildFromJSON");
+        log.info("BlitzCustomClient: buildFromJSON");
         return null;
     }
 
@@ -469,13 +474,13 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public OAuthApplicationInfo mapOAuthApplication(OAuthAppRequest oAuthAppRequest) {
-        System.out.println("BlitzCustomClient: mapOAuthApplication");
+        log.info("BlitzCustomClient: mapOAuthApplication");
         return oAuthAppRequest.getOAuthApplicationInfo();
     }
 
     @Override
     public boolean registerNewResource(API api, Map resourceAttributes) {
-        System.out.println("BlitzCustomClient: registerNewResource");
+        log.info("BlitzCustomClient: registerNewResource");
         // invoke APIResource registration endpoint of the authorization server and creates a new resource.
 
         return true;
@@ -483,7 +488,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     @Override
     public Map getResourceByApiId(String apiId) {
-        System.out.println("BlitzCustomClient: getResourceByApiId");
+        log.info("BlitzCustomClient: getResourceByApiId");
         //  retrieves the registered resource by the given API ID from the  APIResource registration endpoint.
 
         return null;
@@ -491,101 +496,101 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
     @Override
     public boolean updateRegisteredResource(API api, Map resourceAttributes) {
-        System.out.println("BlitzCustomClient: updateRegisteredResource");
+        log.info("BlitzCustomClient: updateRegisteredResource");
         return true;
     }
 
     @Override
     public void deleteRegisteredResourceByAPIId(String apiID) {
-        System.out.println("BlitzCustomClient: deleteRegisteredResourceByAPIId");
+        log.info("BlitzCustomClient: deleteRegisteredResourceByAPIId");
     }
 
     @Override
     public void deleteMappedApplication(String clientId) {
-        System.out.println("BlitzCustomClient: deleteMappedApplication");
+        log.info("BlitzCustomClient: deleteMappedApplication");
     }
 
     @Override
     public Set<String> getActiveTokensByConsumerKey(String s) {
-        System.out.println("BlitzCustomClient: getActiveTokensByConsumerKey");
+        log.info("BlitzCustomClient: getActiveTokensByConsumerKey");
         return Collections.emptySet();
     }
 
     @Override
     public AccessTokenInfo getAccessTokenByConsumerKey(String s) {
-        System.out.println("BlitzCustomClient: getAccessTokenByConsumerKey");
+        log.info("BlitzCustomClient: getAccessTokenByConsumerKey");
         return null;
     }
 
     @Override
     public String getNewApplicationConsumerSecret(AccessTokenRequest accessTokenRequest) {
-        System.out.println("BlitzCustomClient: getNewApplicationConsumerSecret");
+        log.info("BlitzCustomClient: getNewApplicationConsumerSecret");
         return null;
     }
 
     @Override
     public Map<String, Set<Scope>> getScopesForAPIS(String apiIdsString) {
-        System.out.println("BlitzCustomClient: getScopesForAPIS");
+        log.info("BlitzCustomClient: getScopesForAPIS");
         return null;
     }
 
     @Override
     public void registerScope(Scope scope) {
-        System.out.println("BlitzCustomClient: registerScope");
+        log.info("BlitzCustomClient: registerScope");
     }
 
     @Override
     public Scope getScopeByName(String name) {
-        System.out.println("BlitzCustomClient: getScopeByName");
+        log.info("BlitzCustomClient: getScopeByName");
         return null;
     }
 
     @Override
     public Map<String, Scope> getAllScopes() {
-        System.out.println("BlitzCustomClient: getAllScopes");
+        log.info("BlitzCustomClient: getAllScopes");
         return null;
     }
 
     @Override
     public void attachResourceScopes(API api, Set<URITemplate> uriTemplates) {
-        System.out.println("BlitzCustomClient: attachResourceScopes");
+        log.info("BlitzCustomClient: attachResourceScopes");
     }
 
     @Override
     public void updateResourceScopes(API api, Set<String> oldLocalScopeKeys, Set<Scope> newLocalScopes,
                                      Set<URITemplate> oldURITemplates, Set<URITemplate> newURITemplates) {
-        System.out.println("BlitzCustomClient: updateResourceScopes");
+        log.info("BlitzCustomClient: updateResourceScopes");
     }
 
     @Override
     public void detachResourceScopes(API api, Set<URITemplate> uriTemplates) {
-        System.out.println("BlitzCustomClient: detachResourceScopes");
+        log.info("BlitzCustomClient: detachResourceScopes");
     }
 
     @Override
     public void deleteScope(String scopeName) {
-        System.out.println("BlitzCustomClient: deleteScope");
+        log.info("BlitzCustomClient: deleteScope");
     }
 
     @Override
     public void updateScope(Scope scope) {
-        System.out.println("BlitzCustomClient: updateScope");
+        log.info("BlitzCustomClient: updateScope");
     }
 
     @Override
     public boolean isScopeExists(String scopeName) {
-        System.out.println("BlitzCustomClient: isScopeExists");
+        log.info("BlitzCustomClient: isScopeExists");
         return false;
     }
 
     @Override
     public void validateScopes(Set<Scope> scopes) {
-        System.out.println("BlitzCustomClient: validateScopes");
+        log.info("BlitzCustomClient: validateScopes");
     }
 
     @Override
     public String getType() {
-        System.out.println("BlitzCustomClient: getType");
+        log.info("BlitzCustomClient: getType");
         return BlitzConstants.BLITZ_TYPE;
     }
 }
