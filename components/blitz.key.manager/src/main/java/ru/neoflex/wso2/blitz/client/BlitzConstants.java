@@ -65,6 +65,13 @@ public class BlitzConstants {
     public static final byte PASSWORD_LENGTH = 15;
     public static final String AVAILABLE_SYMBOLS = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
+    public static final String ACCESS_TOKEN_AUDIENCE = "aud";
+    public static final String ACCESS_TOKEN_ISSUER = "iss";
+    public static final String ACCESS_TOKEN_TYPE = "token_type";
+    public static final String ACCESS_TOKEN_SUBJECT = "sub";
+    public static final String ACCESS_TOKEN_USER_ID = "uid";
+    public static final String ACCESS_TOKEN_IDENTIFIER = "jti";
+
     BlitzConstants() {
     }
 }
