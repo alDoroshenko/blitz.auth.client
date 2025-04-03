@@ -47,8 +47,10 @@ import org.wso2.carbon.apimgt.impl.utils.APIUtil;
 import ru.neoflex.wso2.blitz.client.Interceptor.BearerTokenInterceptor;
 import ru.neoflex.wso2.blitz.client.client.BlitzAdminTokenClient;
 import ru.neoflex.wso2.blitz.client.client.BlitzApplicationClient;
+import ru.neoflex.wso2.blitz.client.client.BlitzIntrospectClient;
 import ru.neoflex.wso2.blitz.client.model.BlitzAdminTokenResponse;
 import ru.neoflex.wso2.blitz.client.model.BlitzClientInfo;
+import ru.neoflex.wso2.blitz.client.model.IntrospectInfo;
 import ru.neoflex.wso2.blitz.client.model.Oauth;
 
 import java.io.IOException;
@@ -62,15 +64,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.sun.jersey.api.Responses.NOT_FOUND;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.ACCESS_TYPE_OFFLINE;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_NAME;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.DEFAULT_SCORE;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.GRANT_TYPES_FIELD;
-import static ru.neoflex.wso2.blitz.client.BlitzConstants.SCORE_FIELD;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.*;
 
 
 public class BlitzOAuthClient extends AbstractKeyManager {
@@ -79,6 +73,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
     private BlitzApplicationClient blitzApplicationClient;
     private BlitzAdminTokenClient blitzApplicationTokenClient;
     private BearerTokenInterceptor bearerCLientTokenInterceptor = new BearerTokenInterceptor();
+    private BlitzIntrospectClient introspectClient;
 
     private final Gson gson = new Gson();
     private String eTag;
@@ -154,7 +149,6 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             try {
                 BlitzClientInfo responceBlitzClientInfo = blitzApplicationClient.createApplication(clientName, blitzClientInfo);
                 oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
-
                 try {
                     Thread.sleep(7000);
                 } catch (InterruptedException e) {
@@ -337,7 +331,7 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         try {
             Response response = blitzApplicationClient.getBlitzApplicationSettings(clientId);
             if (response.status() == NOT_FOUND) {
-                log.info("BlitzCustomClient: retrieveApplication: application not found in Blitz" );
+                log.info("BlitzCustomClient: retrieveApplication: application not found in Blitz");
                 return null;
             }
             eTag = response.headers().get("ETag").stream().findFirst().orElseThrow(() -> new APIManagementException("BlitzCustomClient: retrieveApplication: Header not found"));
@@ -353,6 +347,21 @@ public class BlitzOAuthClient extends AbstractKeyManager {
             Gson gson = new Gson();
             BlitzClientInfo responceBlitzClientInfo = gson.fromJson(jsonBody, BlitzClientInfo.class);
             OAuthApplicationInfo oAuthApplicationInfo = createOauthApplicationInfo(responceBlitzClientInfo);
+
+            String introspectEndpoint =
+                    (String) configuration.getParameter(APIConstants.KeyManager.INTROSPECTION_ENDPOINT);
+            introspectClient = Feign
+                    .builder()
+                    // .client(new OkHttpClient())
+                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .encoder(new FormEncoder())
+                    .decoder(new GsonDecoder(gson))
+                    .logger(new Slf4jLogger())
+                    .requestInterceptor(new BasicAuthRequestInterceptor(
+                            oAuthApplicationInfo.getClientId(),
+                            oAuthApplicationInfo.getClientSecret()))
+                    .errorDecoder(new BlitzErrorDecoder())
+                    .target(BlitzIntrospectClient.class, introspectEndpoint);
 
             return oAuthApplicationInfo;
         } catch (
@@ -446,10 +455,33 @@ public class BlitzOAuthClient extends AbstractKeyManager {
      */
     @Override
     public AccessTokenInfo getTokenMetaData(String accessToken) {
-        log.info(String.format("Getting access token metadata from authorization server. Access token %s",
+
+        log.info(String.format("BlitzCustomClient: getTokenMetaData. Access token %s",
                 accessToken));
         AccessTokenInfo tokenInfo = new AccessTokenInfo();
-        // todo implemnt logic to get access token meta data from the introspect endpoint
+        IntrospectInfo introspectInfo = introspectClient.introspect(accessToken);
+        log.info("BlitzCustomClient: introspectInfo: " + introspectInfo);
+
+        tokenInfo.setTokenValid(introspectInfo.isActive());
+        if (tokenInfo.isTokenValid()) {
+            long expiryTime = introspectInfo.getExpiry() * 1000;
+            long issuedTime = introspectInfo.getIssuedAt() * 1000;
+            tokenInfo.setValidityPeriod(expiryTime - issuedTime);
+
+            if (StringUtils.isNotEmpty(introspectInfo.getScope())) {
+                tokenInfo.setScope(introspectInfo.getScope().split("\\s+"));
+            }
+
+            tokenInfo.setIssuedTime(issuedTime);
+            tokenInfo.setConsumerKey(introspectInfo.getClientId());
+            tokenInfo.setEndUserName(introspectInfo.getSub());
+            tokenInfo.addParameter(ACCESS_TOKEN_SUBJECT, introspectInfo.getSub());
+            tokenInfo.addParameter(ACCESS_TOKEN_AUDIENCE, introspectInfo.getAudience());
+            tokenInfo.addParameter(ACCESS_TOKEN_TYPE, introspectInfo.getTokenType());
+            tokenInfo.addParameter(ACCESS_TOKEN_IDENTIFIER, introspectInfo.getJti());
+            return tokenInfo;
+        }
+
         return tokenInfo;
     }
 
