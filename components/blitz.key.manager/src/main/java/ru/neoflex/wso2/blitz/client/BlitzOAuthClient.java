@@ -92,8 +92,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
         if (StringUtils.isNotEmpty(tokenEndpoint) && StringUtils.isNotEmpty(clientId) && StringUtils.isNotEmpty(clientSecret)) {
             blitzAdminTokenClient = Feign
                     .builder()
-                    //.client(new OkHttpClient())
-                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .client(new OkHttpClient())
+                    //.client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                     .decoder(new GsonDecoder(gson))
                     .encoder(new FormEncoder())
                     .logger(new Slf4jLogger())
@@ -103,8 +103,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
             blitzApplicationClient = Feign
                     .builder()
-                    //.client(new OkHttpClient())
-                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .client(new OkHttpClient())
+                   // .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                     .decoder(new GsonDecoder(gson))
                     .encoder(new GsonEncoder(gson))
                     .logger(new Slf4jLogger())
@@ -352,8 +352,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
                     (String) configuration.getParameter(APIConstants.KeyManager.INTROSPECTION_ENDPOINT);
             introspectClient = Feign
                     .builder()
-                    // .client(new OkHttpClient())
-                    .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                    .client(new OkHttpClient())
+                    //.client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                     .encoder(new FormEncoder())
                     .decoder(new GsonDecoder(gson))
                     .logger(new Slf4jLogger())
@@ -389,8 +389,8 @@ public class BlitzOAuthClient extends AbstractKeyManager {
 
         blitzApplicationTokenClient = Feign
                 .builder()
-                // .client(new OkHttpClient())
-                .client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
+                .client(new OkHttpClient())
+                //.client(new OkHttpClient(UnsafeOkHttpClient.getUnsafeOkHttpClient()))
                 .decoder(new GsonDecoder(gson))
                 .encoder(new FormEncoder())
                 .logger(new Slf4jLogger())
