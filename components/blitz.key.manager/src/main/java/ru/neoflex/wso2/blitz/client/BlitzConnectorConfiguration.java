@@ -23,7 +23,32 @@ import org.wso2.carbon.apimgt.api.model.ConfigurationDto;
 import org.wso2.carbon.apimgt.api.model.KeyManagerConnectorConfiguration;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.APPLICATION_REGISTRATION_ENDPOINT_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_ID_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_LIST;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_RESPONSE_TYPE_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_SECRET_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LIST;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.EMPTY_DEFAULT_VALUE;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.FIELD_TYPE_INPUT;
+import static ru.neoflex.wso2.blitz.client.BlitzConstants.FIELD_TYPE_SELECT;
+
 
 @Component(
         name = "custom.configuration.component",
@@ -34,50 +59,92 @@ public class BlitzConnectorConfiguration implements KeyManagerConnectorConfigura
 
     @Override
     public String getImplementation() {
-
         return BlitzOAuthClient.class.getName();
     }
 
     @Override
     public String getJWTValidator() {
-
-        // If you need to implement a custom JWT validation logic you need to implement
-        // org.wso2.carbon.apimgt.impl.jwt.JWTValidator interface and instantiate it in here.
         return null;
     }
 
-    /*
-     *  Provides list of Configurations that need to show in Admin portal in order to connect with KeyManager
-     *
-     * */
     @Override
     public List<ConfigurationDto> getConnectionConfigurations() {
 
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        APPLICATION_REGISTRATION_ENDPOINT_NAME,
+                        APPLICATION_REGISTRATION_ENDPOINT_LABEL,
+                        FIELD_TYPE_INPUT,
+                        APPLICATION_REGISTRATION_ENDPOINT_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        false,
+                        Collections.emptyList(),
+                        false
+                ));
 
-        // todo add connection parameters that need to connect to the Custom KeymManager here
-
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        CLIENT_ID_NAME,
+                        CLIENT_ID_LABEL,
+                        FIELD_TYPE_INPUT,
+                        CLIENT_ID_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        false,
+                        Collections.emptyList(),
+                        false));
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        CLIENT_SECRET_NAME,
+                        CLIENT_SECRET_LABEL,
+                        FIELD_TYPE_INPUT,
+                        CLIENT_SECRET_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        true,
+                        Collections.emptyList(),
+                        false));
         return configurationDtoList;
     }
 
-    /*
-     *   Provides list of configurations need to create Oauth applications in Oauth server in Devportal
-     *
-     * */
     @Override
     public List<ConfigurationDto> getApplicationConfigurations() {
-
         List<ConfigurationDto> configurationDtoList = new ArrayList<ConfigurationDto>();
 
-       // todo add application configuration parameters that need create an OAuth application in the OAuth Server
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        CLIENT_RESPONSE_TYPE_NAME,
+                        CLIENT_RESPONSE_TYPE_LABEL,
+                        FIELD_TYPE_SELECT,
+                        CLIENT_RESPONSE_TYPE_TOOLTIP,
+                        EMPTY_DEFAULT_VALUE,
+                        true,
+                        false,
+                        CLIENT_RESPONSE_TYPE_LIST,
+                        true
+                ));
 
+        configurationDtoList
+                .add(new ConfigurationDto(
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_NAME,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LABEL,
+                        FIELD_TYPE_SELECT,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_TOOLTIP,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_DEFAULT_VALUE,
+                        true,
+                        true,
+                        CLIENT_TOKEN_ENDPOINT_AUTH_METHOD_LIST,
+                        false
+                ));
         return configurationDtoList;
     }
 
     @Override
     public String getType() {
 
-        return BlitzConstants.CUSTOM_TYPE;
+        return BlitzConstants.BLITZ_TYPE;
     }
 
     @Override
